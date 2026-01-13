@@ -3,7 +3,8 @@ WORKDIR /src
 
 COPY . .
 RUN dotnet restore
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish PrivateECommerce.API/PrivateECommerce.API.csproj -c Release -o /app/publish
+
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
