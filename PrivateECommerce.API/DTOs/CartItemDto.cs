@@ -1,9 +1,17 @@
-﻿public class CartItemDto
+﻿namespace PrivateECommerce.API.DTOs
 {
-    public int ProductVariantId { get; set; }
-    public string ProductName { get; set; }
-    public string Size { get; set; }
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
-    public string ImageUrl { get; set; }   // 🔴 ADD THIS
+    public class CartItemDto
+    {
+        public int ProductVariantId { get; set; }
+
+        public required string ProductName { get; set; }
+
+        public required string Size { get; set; }
+
+        public int Quantity { get; set; }
+
+        public decimal Price { get; set; }
+
+        public required string ImageUrl { get; set; }   // 🔴 ADDED
+    }
 }

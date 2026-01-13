@@ -1,21 +1,28 @@
 ﻿using PrivateECommerce.API.Models;
 
-public class Product
+namespace PrivateECommerce.API.Models
 {
-    public int Id { get; set; }
+    public class Product
+    {
+        public int Id { get; set; }
 
-    public string Name { get; set; }
+        public required string Name { get; set; }
 
-    // ✅ Category relation
-    public int CategoryId { get; set; }
-    public Category Category { get; set; }
+        // ✅ Category relation
+        public int CategoryId { get; set; }
 
-    public string Description { get; set; }
-    public string ImageUrl { get; set; }
+        // Navigation properties are best initialized as null! to satisfy the compiler
+        // while EF handles the actual loading.
+        public Category Category { get; set; } = null!;
 
-    public bool IsActive { get; set; } = true;
+        public required string Description { get; set; }
+        public required string ImageUrl { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsActive { get; set; } = true;
 
-    public ICollection<ProductVariant> Variants { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Initialize collections to prevent null reference errors
+        public ICollection<ProductVariant> Variants { get; set; } = [];
+    }
 }

@@ -1,6 +1,9 @@
-﻿public class CreateProductVariantDto
+﻿namespace PrivateECommerce.API.DTOs
 {
-    public string Size { get; set; }
-    public int Stock { get; set; }
-    public decimal Price { get; set; }
+    public class CreateProductVariantDto
+    {
+        public required string Size { get; set; }
+        public int Stock { get; set; }
+        public decimal Price { get; set; }
+    }
 }

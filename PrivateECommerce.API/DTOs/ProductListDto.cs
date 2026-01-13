@@ -3,13 +3,17 @@
     public class ProductListDto
     {
         public int ProductId { get; set; }
-        public string Name { get; set; }
-        public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
 
-        public string ImageUrl { get; set; }
+        public required string Name { get; set; }
+
+        public int CategoryId { get; set; }
+        public required string CategoryName { get; set; }
+
+        public required string ImageUrl { get; set; }
+
         public bool IsActive { get; set; }
-        // 🔥 ADD THIS
-        public List<ProductVariantListDto> Variants { get; set; }
+
+        // Initializing with [] (empty list) is the best fix for Collections
+        public List<ProductVariantListDto> Variants { get; set; } = [];
     }
 }

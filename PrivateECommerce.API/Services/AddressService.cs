@@ -2,8 +2,7 @@
 using PrivateECommerce.API.Data;
 using PrivateECommerce.API.DTOs;
 using PrivateECommerce.API.Models;
-using PrivateECommerce.API.DTOs;
-using PrivateECommerce.API.Models;
+
 
 public class AddressService : IAddressService
 {

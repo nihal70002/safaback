@@ -7,13 +7,17 @@ namespace PrivateECommerce.API.Models
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }   // 🔥 REQUIRED
+
+        // Navigation property: marked as null! because EF Core will 
+        // load this from the database.
+        public User User { get; set; } = null!;
 
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public decimal TotalAmount { get; set; }
 
         public string Status { get; set; } = "Pending";
 
-        public ICollection<OrderItem> OrderItems { get; set; }
+        // Initialize the collection to avoid null reference warnings
+        public ICollection<OrderItem> OrderItems { get; set; } = [];
     }
 }

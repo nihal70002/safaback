@@ -2,13 +2,15 @@
 {
     public class AdminCreateProductDto
     {
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         public int CategoryId { get; set; }   // ✅ MUST BE int
 
-        public string Description { get; set; }
-        public string ImageUrl { get; set; }
+        public required string Description { get; set; }
+        public required string ImageUrl { get; set; }
 
-        public List<AdminCreateProductVariantDto> Variants { get; set; }
+        // Initializing with an empty list ensures the API doesn't crash 
+        // if no variants are sent in the initial request object.
+        public List<AdminCreateProductVariantDto> Variants { get; set; } = [];
     }
 }

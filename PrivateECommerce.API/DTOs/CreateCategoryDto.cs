@@ -5,6 +5,6 @@ namespace PrivateECommerce.API.DTOs
     public class CreateCategoryDto
     {
         [Required]
-        public string Name { get; set; }
+        public required string Name { get; set; }
     }
 }

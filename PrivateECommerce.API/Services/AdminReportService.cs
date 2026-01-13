@@ -1,4 +1,5 @@
 ﻿using PrivateECommerce.API.Data;
+using PrivateECommerce.API.DTOs.Reports;
 
 public class AdminReportService : IAdminReportService
 {
