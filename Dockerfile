@@ -1,22 +1,15 @@
-# ---------- BUILD STAGE ----------
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project file first (for caching)
-COPY PrivateEcommerce.API.sln .
-COPY PrivateEcommerce.API/PrivateEcommerce.API.csproj PrivateEcommerce.API/
-
-# Restore dependencies
-RUN dotnet restore PrivateEcommerce.API/PrivateEcommerce.API.csproj
-
-# Copy the remaining source code
+# Copy everything
 COPY . .
 
-# Publish the app
-WORKDIR /src/PrivateEcommerce.API
+# Restore using solution file
+RUN dotnet restore
+
+# Publish the API project
 RUN dotnet publish -c Release -o /app/publish
 
-# ---------- RUNTIME STAGE ----------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/publish .
