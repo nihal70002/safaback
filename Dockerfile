@@ -12,5 +12,5 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 EXPOSE 8080
 
-# IMPORTANT: use shell so *.dll expands correctly
-ENTRYPOINT ["sh", "-c", "dotnet $(ls *.dll)"]
+# Find the REAL app DLL using runtimeconfig
+ENTRYPOINT ["sh", "-c", "dotnet $(ls *.runtimeconfig.json | sed 's/.runtimeconfig.json/.dll/')"]
