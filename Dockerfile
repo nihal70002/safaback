@@ -2,17 +2,17 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# copy solution and project files
+# Copy solution and project file first (for caching)
 COPY PrivateEcommerce.API.sln .
 COPY PrivateEcommerce.API/PrivateEcommerce.API.csproj PrivateEcommerce.API/
 
-# restore
+# Restore dependencies
 RUN dotnet restore PrivateEcommerce.API/PrivateEcommerce.API.csproj
 
-# copy everything else
+# Copy the remaining source code
 COPY . .
 
-# publish
+# Publish the app
 WORKDIR /src/PrivateEcommerce.API
 RUN dotnet publish -c Release -o /app/publish
 
