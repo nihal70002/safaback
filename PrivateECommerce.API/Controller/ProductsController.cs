@@ -15,18 +15,23 @@ namespace PrivateECommerce.API.Controllers
         }
 
         // ===========================
-        // LIST PRODUCTS (USER)
+        // LIST PRODUCTS (USER) - PAGINATED
+        // GET: api/products?page=1&pageSize=12
         // ===========================
         [HttpGet]
-        public IActionResult GetAll()
+        public IActionResult GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 12)
         {
-            return Ok(_productService.GetAllProducts());
+            var result = _productService.GetProducts(page, pageSize);
+            return Ok(result);
         }
 
         // ===========================
         // PRODUCT DETAILS (USER)
+        // GET: api/products/5
         // ===========================
-        [HttpGet("{productId}")]
+        [HttpGet("{productId:int}")]
         public IActionResult GetById(int productId)
         {
             var product = _productService.GetProductById(productId);

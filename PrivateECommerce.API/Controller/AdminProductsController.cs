@@ -59,11 +59,19 @@ namespace PrivateECommerce.API.Controllers
             _productService.UpdateProductVariant(variantId, dto);
             return Ok("Variant updated successfully");
         }
+
         [HttpGet("low-stock")]
         public IActionResult LowStock([FromQuery] int threshold = 5)
         {
             return Ok(_productService.GetLowStockVariants(threshold));
         }
+        [HttpDelete("{productId}")]
+        public IActionResult Delete(int productId)
+        {
+            _productService.DeleteProduct(productId);
+            return Ok("Product deleted");
+        }
+
 
 
 

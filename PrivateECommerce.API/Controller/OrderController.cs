@@ -8,7 +8,7 @@ namespace PrivateECommerce.API.Controllers
 {
     [ApiController]
     [Route("api/orders")]
-    [Authorize] // USER must be logged in
+    [Authorize]
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -28,9 +28,15 @@ namespace PrivateECommerce.API.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
-            _orderService.PlaceOrder(userId, dto);
-
-            return Ok("Order placed successfully");
+            try
+            {
+                _orderService.PlaceOrder(userId, dto);
+                return Ok(new { message = "Order placed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // ==========================
@@ -60,7 +66,7 @@ namespace PrivateECommerce.API.Controllers
             var order = _orderService.GetOrderForUser(orderId, userId);
 
             if (order == null)
-                return NotFound("Order not found");
+                return NotFound(new { message = "Order not found" });
 
             return Ok(order);
         }

@@ -1,9 +1,14 @@
-﻿public class AdminCreateProductDto
+﻿namespace PrivateECommerce.API.DTOs
 {
-    public string Name { get; set; }
-    public string Category { get; set; }
-    public string Description { get; set; }
-    public string ImageUrl { get; set; }
+    public class AdminCreateProductDto
+    {
+        public string Name { get; set; }
 
-    public List<AdminCreateProductVariantDto> Variants { get; set; }
+        public int CategoryId { get; set; }   // ✅ MUST BE int
+
+        public string Description { get; set; }
+        public string ImageUrl { get; set; }
+
+        public List<AdminCreateProductVariantDto> Variants { get; set; }
+    }
 }

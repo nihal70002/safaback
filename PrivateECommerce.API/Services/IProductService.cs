@@ -1,22 +1,18 @@
 ﻿using PrivateECommerce.API.DTOs;
 
-public interface IProductService
+namespace PrivateECommerce.API.Services
 {
-    // CREATE
-    void CreateProduct(AdminCreateProductDto dto);
-
-    // READ
-    IEnumerable<ProductListDto> GetAllProducts();
-    ProductDetailDto GetProductById(int productId);
-
-    // UPDATE
-    void UpdateProduct(int productId, AdminUpdateProductDto dto);
-    void UpdateProductVariant(int variantId, AdminUpdateProductVariantDto dto);
-
-    // STATUS / STOCK
-    void ToggleProduct(int productId);
-    void UpdateVariantStock(int variantId, int stock);
-
-    IEnumerable<LowStockVariantDto> GetLowStockVariants(int threshold);
-
+    public interface IProductService
+    {
+        IEnumerable<ProductListDto> GetAllProducts();
+        ProductDetailDto GetProductById(int productId);
+        void CreateProduct(AdminCreateProductDto dto); // Matches AdminProductsController
+        void UpdateProduct(int productId, AdminUpdateProductDto dto);
+        void UpdateProductVariant(int variantId, AdminUpdateProductVariantDto dto);
+        void UpdateVariantStock(int variantId, int stock);
+        void ToggleProduct(int productId);
+        void DeleteProduct(int productId);
+        IEnumerable<LowStockVariantDto> GetLowStockVariants(int threshold);
+        PagedResponseDto<ProductListDto> GetProducts(int page, int pageSize);
+    }
 }

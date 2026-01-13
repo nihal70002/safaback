@@ -4,23 +4,39 @@ namespace PrivateECommerce.API.Services
 {
     public interface IOrderService
     {
+        // ===========================
         // CUSTOMER
+        // ===========================
         void PlaceOrder(int userId, PlaceOrderDto dto);
 
+        IEnumerable<UserOrderListDto> GetOrdersForUser(int userId);
+        UserOrderDetailDto GetOrderForUser(int orderId, int userId);
+
+        // ===========================
         // ADMIN - VIEW
-        IEnumerable<AdminOrderListDto> GetAllOrders();
+        // ===========================
+        PagedResponseDto<AdminOrderListDto> GetFilteredOrders(
+     string? status,
+     bool today,
+     int page,
+     int pageSize
+ );
+
         AdminOrderDetailDto GetOrderById(int orderId);
 
-        // ADMIN - BUTTON ACTIONS
+        // ===========================
+        // ADMIN - ACTIONS
+        // ===========================
         void ConfirmOrder(int orderId);
         void DispatchOrder(int orderId);
         void DeliverOrder(int orderId);
         void CancelOrder(int orderId);
-        IEnumerable<AdminOrderListDto> GetRecentOrders(int count);
-        IEnumerable<AdminOrderListDto> GetFilteredOrders(string? status, bool today);
+        void RevertOrderStatus(int orderId);
 
-        // NEW – USER
-        IEnumerable<UserOrderListDto> GetOrdersForUser(int userId);
-        UserOrderDetailDto GetOrderForUser(int orderId, int userId);
+        // ===========================
+        // ADMIN - DASHBOARD
+        // ===========================
+        IEnumerable<AdminOrderListDto> GetRecentOrders(int count);
+        IEnumerable<MyOrderDto> GetMyOrders(int userId);
     }
 }

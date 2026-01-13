@@ -16,18 +16,21 @@ namespace PrivateECommerce.API.Controllers
             _orderService = orderService;
         }
 
-        // ==========================
-        // 1️⃣ GET ALL ORDERS (ADMIN)
-        // ==========================
         [HttpGet]
-        public IActionResult GetAllOrders()
+        public IActionResult GetOrders(
+     [FromQuery] string? status,
+     [FromQuery] bool today = false,
+     [FromQuery] int page = 1,
+     [FromQuery] int pageSize = 10
+ )
         {
-            var orders = _orderService.GetAllOrders();
-            return Ok(orders);
+            var result = _orderService.GetFilteredOrders(status, today, page, pageSize);
+            return Ok(result);
         }
 
+
         // ==========================
-        // 2️⃣ GET ORDER DETAILS
+        // GET ORDER DETAILS
         // ==========================
         [HttpGet("{orderId}")]
         public IActionResult GetOrderById(int orderId)
@@ -41,7 +44,7 @@ namespace PrivateECommerce.API.Controllers
         }
 
         // ==========================
-        // 3️⃣ CONFIRM ORDER
+        // CONFIRM ORDER
         // ==========================
         [HttpPut("{orderId}/confirm")]
         public IActionResult ConfirmOrder(int orderId)
@@ -51,7 +54,7 @@ namespace PrivateECommerce.API.Controllers
         }
 
         // ==========================
-        // 4️⃣ DISPATCH ORDER
+        // DISPATCH ORDER
         // ==========================
         [HttpPut("{orderId}/dispatch")]
         public IActionResult DispatchOrder(int orderId)
@@ -61,7 +64,7 @@ namespace PrivateECommerce.API.Controllers
         }
 
         // ==========================
-        // 5️⃣ DELIVER ORDER
+        // DELIVER ORDER
         // ==========================
         [HttpPut("{orderId}/deliver")]
         public IActionResult DeliverOrder(int orderId)
@@ -69,15 +72,9 @@ namespace PrivateECommerce.API.Controllers
             _orderService.DeliverOrder(orderId);
             return Ok("Order delivered");
         }
-        [HttpGet("recent")]
-        public IActionResult GetRecentOrders()
-        {
-            return Ok(_orderService.GetRecentOrders(10));
-        }
-
 
         // ==========================
-        // 6️⃣ CANCEL ORDER
+        // CANCEL ORDER
         // ==========================
         [HttpPut("{orderId}/cancel")]
         public IActionResult CancelOrder(int orderId)
@@ -86,13 +83,29 @@ namespace PrivateECommerce.API.Controllers
             return Ok("Order cancelled");
         }
 
-        [HttpGet("filter")]
-        public IActionResult FilterOrders(
-    [FromQuery] string? status,
-    [FromQuery] bool today = false)
+        // ==========================
+        // RECENT ORDERS
+        // ==========================
+        [HttpGet("recent")]
+        public IActionResult GetRecentOrders()
         {
-            return Ok(_orderService.GetFilteredOrders(status, today));
+            return Ok(_orderService.GetRecentOrders(10));
         }
 
+        //Revert the order
+
+        [HttpPut("{orderId}/revert")]
+        public IActionResult RevertOrder(int orderId)
+        {
+            try
+            {
+                _orderService.RevertOrderStatus(orderId);
+                return Ok("Order status reverted");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

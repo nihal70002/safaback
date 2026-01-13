@@ -30,6 +30,29 @@ namespace PrivateECommerce.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("users")]
+        public IActionResult GetAllUsers()
+        {
+            var users = _userService.GetAllUsers();
+            return Ok(users);
+        }
+
+        // GET: api/admin/users/{id}/details
+        [HttpGet("users/{userId}/details")]
+        public IActionResult GetUserDetails(int userId)
+        {
+            var details = _userService.GetUserDetails(userId);
+            if (details == null) return NotFound("User not found");
+
+            return Ok(details);
+        }
+        [HttpGet("users/{id}/purchase-insights")]
+        public IActionResult GetPurchaseInsights(int id)
+        {
+            return Ok(_userService.GetUserPurchaseInsights(id));
+        }
+
 
     }
 }
+

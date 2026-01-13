@@ -53,6 +53,7 @@ namespace PrivateECommerce.API.Controllers
 
             return Ok(new
             {
+                message = "Login successful",
                 token,
                 user.Id,
                 user.Name,
