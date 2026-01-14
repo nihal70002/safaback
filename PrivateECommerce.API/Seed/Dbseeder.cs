@@ -7,12 +7,11 @@ namespace PrivateECommerce.API.Seed
     {
         public static void SeedAdmin(AppDbContext context)
         {
-            // Ensure DB & tables exist
-            context.Database.EnsureCreated();
-
-            // If admin already exists, do nothing
-            if (context.Users.Any(u => u.Role == "Admin"))
+            if (context.Users.Any(u => u.Email == "admin@company.com"))
+            {
+                Console.WriteLine("✅ Admin user already exists. Skipping seed.");
                 return;
+            }
 
             var admin = new User
             {
@@ -27,6 +26,8 @@ namespace PrivateECommerce.API.Seed
 
             context.Users.Add(admin);
             context.SaveChanges();
+
+            Console.WriteLine("🚀 Admin user seeded successfully (admin@company.com)");
         }
     }
 }
