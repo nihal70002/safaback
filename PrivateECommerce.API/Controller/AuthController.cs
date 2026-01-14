@@ -32,16 +32,17 @@ namespace PrivateECommerce.API.Controllers
                 return BadRequest("Invalid loginId or password");
             }
 
-            var user = _context.Users.FirstOrDefault(u =>
-                (u.Email == request.LoginId || u.PhoneNumber == request.LoginId)
-                && u.IsActive
-            );
+            var user = _context.Users
+     .SingleOrDefault(u =>
+         u.Email == request.LoginId ||
+         u.PhoneNumber == request.LoginId
+     );
 
             if (user == null)
-                return BadRequest(new
-                {
-                    message = "Invalid LoginId "
-                });
+            {
+                return Unauthorized("Invalid login credentials");
+            }
+
 
             bool passwordValid = BCrypt.Net.BCrypt.Verify(
                 request.Password, user.PasswordHash);
