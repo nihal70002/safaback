@@ -52,17 +52,23 @@ public class AdminReportService : IAdminReportService
     {
         return _context.OrderItems
             .Where(oi => oi.Order.Status == "Delivered")
-            .GroupBy(oi => oi.ProductVariant.Product.Name)
+            .GroupBy(oi => new
+            {
+                oi.ProductVariant.Product.Name,
+                oi.ProductVariant.Product.ImageUrl   // ✅ ADD
+            })
             .Select(g => new TopProductDto
             {
-                ProductName = g.Key,
+                ProductName = g.Key.Name,
+                ImageUrl = g.Key.ImageUrl,            // ✅ MAP
                 QuantitySold = g.Sum(x => x.Quantity),
                 Revenue = g.Sum(x => x.Quantity * x.UnitPrice)
             })
-            .OrderByDescending(x => x.Revenue)
+            .OrderByDescending(x => x.QuantitySold)
             .Take(top)
             .ToList();
     }
+
     public IEnumerable<CustomerProductInterestDto> GetCustomerProductInterest(int userId)
     {
         return _context.OrderItems

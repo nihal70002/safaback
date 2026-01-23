@@ -4,7 +4,9 @@
     {
         public required string Name { get; set; }
 
-        public int CategoryId { get; set; }   // ✅ FIX
+        public int CategoryId { get; set; }
+
+        public int BrandId { get; set; }   // ✅ ADD THIS
 
         public required string Description { get; set; }
 

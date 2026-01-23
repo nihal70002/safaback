@@ -1,34 +1,44 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace PrivateECommerce.API.Models
 {
     public class User
     {
+        [Key]
         public int Id { get; set; }
 
         [Required]
-        public required string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         [Required]
-        public required string CompanyName { get; set; }
-
-        [Required, EmailAddress]
-        public required string Email { get; set; }
+        public string Email { get; set; } = null!;
 
         [Required]
-        public required string PhoneNumber { get; set; }
+        public string PhoneNumber { get; set; } = null!;
 
         [Required]
-        public required string PasswordHash { get; set; }
+        public string CompanyName { get; set; } = null!;
 
         [Required]
-        public required string Role { get; set; } // Admin / Customer
+        public string Role { get; set; } = "Customer";
+
+        [Required]
+        public string PasswordHash { get; set; } = null!;
 
         public bool IsActive { get; set; } = true;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public int? SalesExecutiveId { get; set; }
 
-        // Initializing the collection avoids null reference warnings
-        public ICollection<Order> Orders { get; set; } = [];
+        [JsonIgnore] // ✅ breaks User ↔ User loop
+        public User? SalesExecutive { get; set; }
+
+        [JsonIgnore] // ✅ breaks User ↔ User loop
+        public ICollection<User> AssignedCustomers { get; set; } = new List<User>();
+
+        public ICollection<Order> OrdersPlaced { get; set; } = new List<Order>();
+
+        public ICollection<Order> OrdersHandled { get; set; } = new List<Order>();
     }
 }

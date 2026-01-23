@@ -22,6 +22,23 @@ namespace PrivateECommerce.API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Brand", b =>
+                {
+                    b.Property<int>("BrandId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BrandId"));
+
+                    b.Property<string>("BrandName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("BrandId");
+
+                    b.ToTable("Brands");
+                });
+
             modelBuilder.Entity("PrivateECommerce.API.Models.Address", b =>
                 {
                     b.Property<int>("Id")
@@ -141,8 +158,26 @@ namespace PrivateECommerce.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("AdminApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool?>("IsRejectedBySales")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectedReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("SalesApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SalesExecutiveId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -155,6 +190,8 @@ namespace PrivateECommerce.API.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SalesExecutiveId");
 
                     b.HasIndex("UserId");
 
@@ -198,6 +235,9 @@ namespace PrivateECommerce.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BrandId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
@@ -221,6 +261,8 @@ namespace PrivateECommerce.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BrandId");
+
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
@@ -238,7 +280,8 @@ namespace PrivateECommerce.API.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<int>("ProductId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("ProductId");
 
                     b.Property<string>("Size")
                         .IsRequired()
@@ -266,9 +309,6 @@ namespace PrivateECommerce.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -292,7 +332,18 @@ namespace PrivateECommerce.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("SalesExecutiveId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SalesExecutiveId");
 
                     b.ToTable("Users");
                 });
@@ -329,11 +380,18 @@ namespace PrivateECommerce.API.Migrations
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Order", b =>
                 {
+                    b.HasOne("PrivateECommerce.API.Models.User", "SalesExecutive")
+                        .WithMany("OrdersHandled")
+                        .HasForeignKey("SalesExecutiveId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PrivateECommerce.API.Models.User", "User")
-                        .WithMany("Orders")
+                        .WithMany("OrdersPlaced")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("SalesExecutive");
 
                     b.Navigation("User");
                 });
@@ -359,11 +417,19 @@ namespace PrivateECommerce.API.Migrations
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Product", b =>
                 {
+                    b.HasOne("Brand", "Brand")
+                        .WithMany("Products")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PrivateECommerce.API.Models.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Brand");
 
                     b.Navigation("Category");
                 });
@@ -377,6 +443,21 @@ namespace PrivateECommerce.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("PrivateECommerce.API.Models.User", b =>
+                {
+                    b.HasOne("PrivateECommerce.API.Models.User", "SalesExecutive")
+                        .WithMany("AssignedCustomers")
+                        .HasForeignKey("SalesExecutiveId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("SalesExecutive");
+                });
+
+            modelBuilder.Entity("Brand", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Cart", b =>
@@ -396,7 +477,11 @@ namespace PrivateECommerce.API.Migrations
 
             modelBuilder.Entity("PrivateECommerce.API.Models.User", b =>
                 {
-                    b.Navigation("Orders");
+                    b.Navigation("AssignedCustomers");
+
+                    b.Navigation("OrdersHandled");
+
+                    b.Navigation("OrdersPlaced");
                 });
 #pragma warning restore 612, 618
         }

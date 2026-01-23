@@ -1,6 +1,9 @@
-﻿using PrivateECommerce.API.DTOs;
+﻿using PrivateECommerce.API.DTOs.Admin;
 
-public interface IAdminDashboardService
+namespace PrivateECommerce.API.Services
 {
-    AdminDashboardSummaryDto GetSummary();
+    public interface IAdminDashboardService
+    {
+        AdminDashboardSummaryDto GetSummary();
+    }
 }

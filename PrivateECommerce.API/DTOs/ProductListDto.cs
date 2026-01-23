@@ -1,19 +1,18 @@
-﻿namespace PrivateECommerce.API.DTOs
+﻿using PrivateECommerce.API.DTOs;
+
+public class ProductListDto
 {
-    public class ProductListDto
-    {
-        public int ProductId { get; set; }
+    public int ProductId { get; set; }
+    public string Name { get; set; }
 
-        public required string Name { get; set; }
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; }
 
-        public int CategoryId { get; set; }
-        public required string CategoryName { get; set; }
+    public int BrandId { get; set; }          // ✅ ADD
+    public string BrandName { get; set; }     // ✅ ADD
 
-        public required string ImageUrl { get; set; }
+    public string ImageUrl { get; set; }
+    public bool IsActive { get; set; }
 
-        public bool IsActive { get; set; }
-
-        // Initializing with [] (empty list) is the best fix for Collections
-        public List<ProductVariantListDto> Variants { get; set; } = [];
-    }
+    public List<ProductVariantListDto> Variants { get; set; }
 }

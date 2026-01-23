@@ -1,12 +1,17 @@
-﻿namespace PrivateECommerce.API.Models
+﻿using System.Text.Json.Serialization;
+
+namespace PrivateECommerce.API.Models
 {
     public class OrderItem
     {
         public int Id { get; set; }
 
         public int OrderId { get; set; }
+
+        [JsonIgnore]
         public Order Order { get; set; }
 
+        // ✅ ONLY ProductVariant
         public int ProductVariantId { get; set; }
         public ProductVariant ProductVariant { get; set; }
 

@@ -15,9 +15,9 @@ namespace PrivateECommerce.API.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Address> Addresses { get; set; }
-
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Brand> Brands { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,6 +29,12 @@ namespace PrivateECommerce.API.Data
                 .WithOne(ci => ci.Cart)
                 .HasForeignKey(ci => ci.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductVariant>()
+    .HasOne(v => v.Product)
+    .WithMany(p => p.Variants)
+    .HasForeignKey(v => v.ProductId);
+
 
             // ================= CART ↔ USER =================
             modelBuilder.Entity<Cart>()
@@ -43,6 +49,41 @@ namespace PrivateECommerce.API.Data
                 .WithMany()
                 .HasForeignKey(ci => ci.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // =====================================================
+            // 🔥 ORDER ↔ USER (CUSTOMER)
+            // =====================================================
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany(u => u.OrdersPlaced)
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // =====================================================
+            // 🔥 ORDER ↔ USER (SALES EXECUTIVE)
+            // =====================================================
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.SalesExecutive)
+                .WithMany(u => u.OrdersHandled)
+                .HasForeignKey(o => o.SalesExecutiveId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<User>()
+      .HasIndex(u => u.Email)
+      .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.PhoneNumber)
+                .IsUnique();
+
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<User>()
+    .HasOne(u => u.SalesExecutive)
+    .WithMany(se => se.AssignedCustomers)
+    .HasForeignKey(u => u.SalesExecutiveId)
+    .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

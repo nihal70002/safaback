@@ -33,10 +33,11 @@ namespace PrivateECommerce.API.Controllers
             }
 
             var user = _context.Users
-     .SingleOrDefault(u =>
+     .FirstOrDefault(u =>
          u.Email == request.LoginId ||
          u.PhoneNumber == request.LoginId
      );
+
 
             if (user == null)
             {

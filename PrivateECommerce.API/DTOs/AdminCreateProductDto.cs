@@ -5,7 +5,7 @@
         public required string Name { get; set; }
 
         public int CategoryId { get; set; }   // ✅ MUST BE int
-
+        public int BrandId { get; set; }
         public required string Description { get; set; }
         public required string ImageUrl { get; set; }
 

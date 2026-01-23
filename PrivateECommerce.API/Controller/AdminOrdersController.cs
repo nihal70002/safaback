@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PrivateECommerce.API.DTOs.Orders;
 using PrivateECommerce.API.Services;
 
 namespace PrivateECommerce.API.Controllers
@@ -77,11 +78,15 @@ namespace PrivateECommerce.API.Controllers
         // CANCEL ORDER
         // ==========================
         [HttpPut("{orderId}/cancel")]
-        public IActionResult CancelOrder(int orderId)
+        public IActionResult CancelOrder(
+    int orderId,
+    [FromBody] RejectOrderDto dto
+)
         {
-            _orderService.CancelOrder(orderId);
+            _orderService.CancelOrder(orderId, dto.Reason);
             return Ok("Order cancelled");
         }
+
 
         // ==========================
         // RECENT ORDERS
@@ -93,19 +98,19 @@ namespace PrivateECommerce.API.Controllers
         }
 
         //Revert the order
-
+        // ==========================
+        // ==========================
+        // REVERT ORDER
+        // ==========================
         [HttpPut("{orderId}/revert")]
         public IActionResult RevertOrder(int orderId)
         {
-            try
-            {
-                _orderService.RevertOrderStatus(orderId);
-                return Ok("Order status reverted");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            _orderService.RevertOrderStatus(orderId);
+            return Ok("Order reverted");
         }
+
+
+
+
     }
 }

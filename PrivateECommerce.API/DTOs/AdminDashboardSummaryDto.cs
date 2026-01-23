@@ -1,9 +1,13 @@
-﻿namespace PrivateECommerce.API.DTOs
+﻿namespace PrivateECommerce.API.DTOs.Admin
 {
     public class AdminDashboardSummaryDto
     {
         public int TotalOrders { get; set; }
-        public int PendingOrders { get; set; }
+
+        // ✅ NEW (CORRECT)
+        public int PendingSalesApproval { get; set; }
+        public int PendingAdminApproval { get; set; }
+
         public int TodayOrders { get; set; }
 
         public decimal TotalRevenue { get; set; }

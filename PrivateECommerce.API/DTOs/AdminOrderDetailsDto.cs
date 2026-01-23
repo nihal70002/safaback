@@ -4,24 +4,31 @@
     {
         public int OrderId { get; set; }
 
-        public required string CustomerName { get; set; }
-        public required string CompanyName { get; set; }
-        public required string PhoneNumber { get; set; }
+        // Removed 'required' and added '?' to make them nullable
+        public string? CustomerName { get; set; }
+        public string? CompanyName { get; set; }
+        public string? PhoneNumber { get; set; }
 
         public DateTime OrderDate { get; set; }
+        public int? SalesExecutiveId { get; set; }
+        public string? SalesExecutiveName { get; set; }
+        public string? SalesExecutivePhone { get; set; }
 
-        public required string Status { get; set; }
+        public string? Status { get; set; }
         public decimal TotalAmount { get; set; }
+        public string? RejectedReason { get; set; }
 
-        // Initializing the list to avoid CS8618
-        public List<AdminOrderItemDto> Items { get; set; } = [];
+
+
+        // Initialized with an empty list to prevent null reference issues
+        public List<AdminOrderItemDto> Items { get; set; } = new List<AdminOrderItemDto>();
     }
 
     public class AdminOrderItemDto
     {
-        public required string ProductName { get; set; }
+        public string? ProductName { get; set; }
         public int Quantity { get; set; }
+        public string? Size { get; set; }
         public decimal UnitPrice { get; set; }
     }
-
 }

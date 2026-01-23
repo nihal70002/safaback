@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace PrivateECommerce.API.Models
 {
@@ -6,18 +7,47 @@ namespace PrivateECommerce.API.Models
     {
         public int Id { get; set; }
 
+        // =======================
+        // CUSTOMER
+        // =======================
         public int UserId { get; set; }
 
-        // Navigation property: marked as null! because EF Core will 
-        // load this from the database.
+        [JsonIgnore]
         public User User { get; set; } = null!;
+
+        // =======================
+        // SALES EXECUTIVE
+        // =======================
+        public bool? IsRejectedBySales { get; set; }
+
+        public int? SalesExecutiveId { get; set; }
+
+        [JsonIgnore]
+        public User? SalesExecutive { get; set; }
+        public string? RejectedReason { get; set; }
+
+        // null   → Pending by Sales
+        // not null → Approved by Sales
+        public DateTime? SalesApprovedAt { get; set; }
+
+        // =======================
+        // ADMIN WORKFLOW
+        // =======================
+        public string Status { get; set; } = "PendingSalesApproval";
+        // Confirmed | Dispatched | Delivered
+
+        public DateTime? AdminApprovedAt { get; set; }
+
+        // ✅ ADD THIS
+        public DateTime? DeliveredAt { get; set; }
+
+        // =======================
+        // ORDER INFO
+        // =======================
 
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public decimal TotalAmount { get; set; }
 
-        public string Status { get; set; } = "Pending";
-
-        // Initialize the collection to avoid null reference warnings
-        public ICollection<OrderItem> OrderItems { get; set; } = [];
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }

@@ -1,0 +1,8 @@
+﻿namespace PrivateECommerce.API.DTOs
+{
+    public class AssignSalesExecutiveDto
+    {
+        public int SalesExecutiveId { get; set; }
+    }
+
+}

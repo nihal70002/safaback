@@ -2,7 +2,8 @@
 {
     public class PlaceOrderDto
     {
-        public List<OrderItemDto> Items { get; set; } = new();
+        public int SalesExecutiveId { get; set; }
+        public List<OrderItemDto> Items { get; set; }
     }
 
     public class OrderItemDto

@@ -19,56 +19,98 @@ namespace PrivateECommerce.API.Controllers
         }
 
         // ==========================
-        // 1️⃣ PLACE ORDER (USER)
+        // CUSTOMER: PLACE ORDER
         // ==========================
         [HttpPost]
-        public IActionResult PlaceOrder(PlaceOrderDto dto)
+        public IActionResult PlaceOrder(PlaceOrderByCustomerDto dto)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
-
             try
             {
+                int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Or your way of getting ID
                 _orderService.PlaceOrder(userId, dto);
-                return Ok(new { message = "Order placed successfully" });
+                return Ok("Order placed successfully");
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                // This sends a clean message back to Swagger immediately
+                return BadRequest(ex.Message);
             }
         }
 
+        [Authorize]
+        [HttpGet("my/{orderId}")]
+        public async Task<IActionResult> GetMyOrderDetails(int orderId)
+        {
+            var userId = int.Parse(
+    User.FindFirstValue(ClaimTypes.NameIdentifier)
+);
+
+            // from JWT claim
+
+            var order = await _orderService.GetMyOrderDetailsAsync(userId, orderId);
+
+            if (order == null)
+                return NotFound("Order not found");
+
+            return Ok(order);
+        }
+
         // ==========================
-        // 2️⃣ USER ORDER HISTORY
+        // CUSTOMER: MY ORDERS
         // ==========================
         [HttpGet("my")]
+        [Authorize(Roles = "Customer")]
         public IActionResult GetMyOrders()
         {
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
-            var orders = _orderService.GetOrdersForUser(userId);
-            return Ok(orders);
+            return Ok(_orderService.GetOrdersForUser(userId));
         }
 
         // ==========================
-        // 3️⃣ USER ORDER DETAILS
+        // SALES EXECUTIVE: PENDING ORDERS
         // ==========================
-        [HttpGet("my/{orderId}")]
-        public IActionResult GetMyOrderDetails(int orderId)
+        [HttpGet("sales/pending")]
+        [Authorize(Roles = "SalesExecutive")]
+        public IActionResult GetPendingOrdersForSales()
         {
-            int userId = int.Parse(
+            int salesId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)!
             );
 
-            var order = _orderService.GetOrderForUser(orderId, userId);
+            return Ok(_orderService.GetPendingOrdersForSales(salesId));
+        }
 
-            if (order == null)
-                return NotFound(new { message = "Order not found" });
+        // ==========================
+        // SALES EXECUTIVE: APPROVE ORDER
+        // ==========================
+        [HttpPost("sales/{orderId}/approve")]
+        [Authorize(Roles = "SalesExecutive")]
+        public IActionResult ApproveOrderBySales(int orderId)
+        {
+            int salesId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
 
-            return Ok(order);
+            _orderService.ApproveBySales(orderId, salesId);
+            return Ok(new { message = "Order approved successfully" });
+        }
+
+        // ==========================
+        // SALES EXECUTIVE: REJECT ORDER
+        // ==========================
+        [HttpPost("sales/{orderId}/reject")]
+        [Authorize(Roles = "SalesExecutive")]
+        public IActionResult RejectOrderBySales(int orderId)
+        {
+            int salesId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
+
+            _orderService.RejectBySales(orderId, salesId);
+            return Ok(new { message = "Order rejected successfully" });
         }
     }
 }
