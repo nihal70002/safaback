@@ -5,9 +5,15 @@
         public int UserId { get; set; }
         public required string Name { get; set; }
         public required string Email { get; set; }
+
+        // ✅ ADD THESE
+        public string? CompanyName { get; set; }
+        public string? PhoneNumber { get; set; }
+
         public int TotalOrders { get; set; }
         public decimal TotalSpent { get; set; }
     }
+
 
     // Detailed info including full order history
     public class UserDetailsDto : UserSummaryDto

@@ -68,16 +68,23 @@ namespace PrivateECommerce.API.Services
                 .AsNoTracking()
                 .Where(u => u.Role == "Customer")
                 .Include(u => u.OrdersPlaced)
+                .OrderBy(u => u.Name) // ✅ backend sorting
                 .Select(u => new UserSummaryDto
                 {
                     UserId = u.Id,
                     Name = u.Name,
                     Email = u.Email,
+
+                    // ✅ MAP THESE
+                    CompanyName = u.CompanyName,
+                    PhoneNumber = u.PhoneNumber,
+
                     TotalOrders = u.OrdersPlaced.Count,
                     TotalSpent = u.OrdersPlaced.Sum(o => (decimal?)o.TotalAmount) ?? 0
                 })
                 .ToList();
         }
+
 
         public UserDetailsDto? GetUserDetails(int userId)
         {
