@@ -25,7 +25,8 @@ namespace PrivateECommerce.API.Controllers
         public IActionResult AddBrand([FromBody] CreateBrandDto dto)
         {
             _service.CreateBrand(dto);
-            return Ok("Brand created");
+            return Ok(new { message = "Brand created successfully" });
         }
+
     }
 }

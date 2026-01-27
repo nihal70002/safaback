@@ -7,14 +7,21 @@ public class CloudinaryService : ICloudinaryService
 
     public CloudinaryService(IConfiguration config)
     {
-        var account = new Account(
-            config["Cloudinary:CloudName"],
-            config["Cloudinary:ApiKey"],
-            config["Cloudinary:ApiSecret"]
-        );
+        var cloudName = config["Cloudinary:CloudName"];
+        var apiKey = config["Cloudinary:ApiKey"];
+        var apiSecret = config["Cloudinary:ApiSecret"];
 
+        if (string.IsNullOrWhiteSpace(cloudName) ||
+            string.IsNullOrWhiteSpace(apiKey) ||
+            string.IsNullOrWhiteSpace(apiSecret))
+        {
+            throw new Exception("Cloudinary configuration missing or invalid");
+        }
+
+        var account = new Account(cloudName, apiKey, apiSecret);
         _cloudinary = new Cloudinary(account);
     }
+
 
     public async Task<string> UploadImageAsync(IFormFile file)
     {

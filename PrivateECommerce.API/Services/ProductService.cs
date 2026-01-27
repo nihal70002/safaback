@@ -175,7 +175,9 @@ namespace PrivateECommerce.API.Services
         // ===========================
         public void CreateProduct(AdminCreateProductDto dto)
         {
-            // Optional safety check
+            if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
+                throw new Exception("Invalid Category");
+
             if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
                 throw new Exception("Invalid Brand");
 
@@ -183,7 +185,7 @@ namespace PrivateECommerce.API.Services
             {
                 Name = dto.Name,
                 CategoryId = dto.CategoryId,
-                BrandId = dto.BrandId,          // ✅ ADD THIS
+                BrandId = dto.BrandId,
                 Description = dto.Description,
                 ImageUrl = dto.ImageUrl,
                 IsActive = true,
@@ -193,7 +195,7 @@ namespace PrivateECommerce.API.Services
             _context.Products.Add(product);
             _context.SaveChanges();
 
-            if (dto.Variants != null && dto.Variants.Any())
+            if (dto.Variants != null)
             {
                 foreach (var v in dto.Variants)
                 {
@@ -205,11 +207,11 @@ namespace PrivateECommerce.API.Services
                         Stock = v.Stock
                     });
                 }
+
                 _context.SaveChanges();
             }
-
-            IncrementCacheVersion(); // 🔥 invalidate cache
         }
+
 
 
         // ===========================
