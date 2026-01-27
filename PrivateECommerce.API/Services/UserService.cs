@@ -124,7 +124,8 @@ namespace PrivateECommerce.API.Services
                 PhoneNumber = phone,
                 CompanyName = dto.CompanyName,
                 Role = "SalesExecutive",
-                IsActive = true
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             };
 
             user.PasswordHash =
