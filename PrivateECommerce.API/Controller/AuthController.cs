@@ -102,6 +102,24 @@ namespace PrivateECommerce.API.Controllers
 
             return Ok("All passwords rehashed successfully");
         }
+        [HttpPost("force-reset-admin")]
+        [AllowAnonymous]
+        public IActionResult ForceResetAdmin()
+        {
+            var user = _context.Users
+                .FirstOrDefault(u => u.Email == "admin@company.com");
+
+            if (user == null)
+                return NotFound("Admin user not found");
+
+            user.PasswordHash =
+                _passwordHasher.HashPassword(user, "Admin@123");
+
+            _context.SaveChanges();
+
+            return Ok("Admin password reset to Admin@123");
+        }
+
 
 
 
