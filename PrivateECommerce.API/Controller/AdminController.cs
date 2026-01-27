@@ -56,13 +56,29 @@ namespace PrivateECommerce.API.Controllers
             }
             catch (Exception ex)
             {
+                // Drill down to find the real database error
+                var errorMessage = ex.Message;
+
+                if (ex.InnerException != null)
+                {
+                    // The InnerException usually contains the SQL error (e.g., Duplicate Key)
+                    errorMessage = ex.InnerException.Message;
+
+                    // Sometimes there is a second layer of inner exceptions in EF Core
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        errorMessage = ex.InnerException.InnerException.Message;
+                    }
+                }
+
                 return BadRequest(new
                 {
-                    message = ex.Message
+                    message = "Registration failed",
+                    detailedError = errorMessage, // This will show the actual SQL error in Swagger
+                    source = ex.Source
                 });
             }
         }
-
 
         // ==========================
         // ADMIN: GET USERS
