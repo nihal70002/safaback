@@ -105,20 +105,23 @@ namespace PrivateECommerce.API.Services
 
         public User CreateSalesExecutive(CreateSalesExecutiveDto dto)
         {
-            if (_context.Users.Any(u => u.Email == dto.Email))
-                throw new Exception("Email already exists.");
+            var email = dto.Email.Trim().ToLower();
+            var phone = dto.PhoneNumber.Trim();
 
-            if (_context.Users.Any(u => u.PhoneNumber == dto.PhoneNumber))
-                throw new Exception("Phone number already exists.");
+            if (_context.Users.Any(u => u.Email == email))
+                throw new InvalidOperationException("Email already exists.");
+
+            if (_context.Users.Any(u => u.PhoneNumber == phone))
+                throw new InvalidOperationException("Phone number already exists.");
 
             if (_context.Users.Any(u => u.CompanyName == dto.CompanyName))
-                throw new Exception("Company name already exists.");
+                throw new InvalidOperationException("Company name already exists.");
 
             var user = new User
             {
                 Name = dto.Name,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
+                Email = email,
+                PhoneNumber = phone,
                 CompanyName = dto.CompanyName,
                 Role = "SalesExecutive",
                 IsActive = true
@@ -132,6 +135,7 @@ namespace PrivateECommerce.API.Services
 
             return user;
         }
+
 
 
         public SalesExecutivePerformanceDto GetSalesExecutivePerformance(int salesExecutiveId)
