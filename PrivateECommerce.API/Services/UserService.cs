@@ -108,6 +108,12 @@ namespace PrivateECommerce.API.Services
             if (_context.Users.Any(u => u.Email == dto.Email))
                 throw new Exception("Email already exists.");
 
+            if (_context.Users.Any(u => u.PhoneNumber == dto.PhoneNumber))
+                throw new Exception("Phone number already exists.");
+
+            if (_context.Users.Any(u => u.CompanyName == dto.CompanyName))
+                throw new Exception("Company name already exists.");
+
             var user = new User
             {
                 Name = dto.Name,
@@ -118,12 +124,15 @@ namespace PrivateECommerce.API.Services
                 IsActive = true
             };
 
-            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
+            user.PasswordHash =
+                _passwordHasher.HashPassword(user, dto.Password);
 
             _context.Users.Add(user);
             _context.SaveChanges();
+
             return user;
         }
+
 
         public SalesExecutivePerformanceDto GetSalesExecutivePerformance(int salesExecutiveId)
         {
