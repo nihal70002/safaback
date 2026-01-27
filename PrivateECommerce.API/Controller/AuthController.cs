@@ -20,18 +20,22 @@ namespace PrivateECommerce.API.Controllers
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
         private readonly IAuthService _authService;
-        private readonly PasswordHasher<User> _passwordHasher = new();
+        private readonly IPasswordHasher<User> _passwordHasher;
+
 
 
         public AuthController(
-            AppDbContext context,
-            IConfiguration config,
-            IAuthService authService)
+     AppDbContext context,
+     IConfiguration config,
+     IAuthService authService,
+     IPasswordHasher<User> passwordHasher)
         {
             _context = context;
             _config = config;
             _authService = authService;
+            _passwordHasher = passwordHasher;
         }
+
 
         // 🔐 LOGIN
         [HttpPost("login")]
@@ -79,8 +83,27 @@ namespace PrivateECommerce.API.Controllers
                 user.Role
             });
         }
+        [HttpPost("rehash-existing-passwords")]
+        [AllowAnonymous]
+        public IActionResult RehashExistingPasswords()
+        {
+            var users = _context.Users.ToList();
 
-        
+            foreach (var user in users)
+            {
+                // ⚠️ assumes PasswordHash currently stores plain text
+                var plainPassword = user.PasswordHash;
+
+                user.PasswordHash =
+                    _passwordHasher.HashPassword(user, plainPassword);
+            }
+
+            _context.SaveChanges();
+
+            return Ok("All passwords rehashed successfully");
+        }
+
+
 
         // 🔑 CHANGE PASSWORD (Logged-in)
         [Authorize]

@@ -13,7 +13,7 @@ namespace PrivateECommerce.API.Services
         // ============================
         void CreateCustomer(CreateUserDto dto);
         List<AdminCustomerDto> GetAllUsers();
-
+            
         UserDetailsDto? GetUserDetails(int userId);
 
         IEnumerable<SalesExecutiveAdminSummaryDto> GetAllSalesExecutivesForAdmin();
