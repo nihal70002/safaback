@@ -12,8 +12,8 @@ using PrivateECommerce.API.Data;
 namespace PrivateECommerce.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260116161957_AddIsRejectedBySalesToOrders")]
-    partial class AddIsRejectedBySalesToOrders
+    [Migration("20260127095833_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,51 @@ namespace PrivateECommerce.API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Brand", b =>
+                {
+                    b.Property<int>("BrandId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BrandId"));
+
+                    b.Property<string>("BrandName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("BrandId");
+
+                    b.ToTable("Brands");
+                });
+
+            modelBuilder.Entity("PasswordResetToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Expiry")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PasswordResetTokens");
+                });
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Address", b =>
                 {
@@ -147,11 +192,17 @@ namespace PrivateECommerce.API.Migrations
                     b.Property<DateTime?>("AdminApprovedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool?>("IsRejectedBySales")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectedReason")
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("SalesApprovedAt")
                         .HasColumnType("timestamp with time zone");
@@ -215,6 +266,9 @@ namespace PrivateECommerce.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("BrandId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
@@ -238,6 +292,8 @@ namespace PrivateECommerce.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BrandId");
+
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
@@ -255,7 +311,8 @@ namespace PrivateECommerce.API.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<int>("ProductId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("ProductId");
 
                     b.Property<string>("Size")
                         .IsRequired()
@@ -283,6 +340,9 @@ namespace PrivateECommerce.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -309,6 +369,9 @@ namespace PrivateECommerce.API.Migrations
                     b.Property<int?>("SalesExecutiveId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -320,6 +383,17 @@ namespace PrivateECommerce.API.Migrations
                     b.HasIndex("SalesExecutiveId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("PasswordResetToken", b =>
+                {
+                    b.HasOne("PrivateECommerce.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Cart", b =>
@@ -391,11 +465,19 @@ namespace PrivateECommerce.API.Migrations
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Product", b =>
                 {
+                    b.HasOne("Brand", "Brand")
+                        .WithMany("Products")
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("PrivateECommerce.API.Models.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Brand");
 
                     b.Navigation("Category");
                 });
@@ -419,6 +501,11 @@ namespace PrivateECommerce.API.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("SalesExecutive");
+                });
+
+            modelBuilder.Entity("Brand", b =>
+                {
+                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("PrivateECommerce.API.Models.Cart", b =>

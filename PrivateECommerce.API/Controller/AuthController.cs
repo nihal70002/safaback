@@ -83,43 +83,7 @@ namespace PrivateECommerce.API.Controllers
                 user.Role
             });
         }
-        [HttpPost("rehash-existing-passwords")]
-        [AllowAnonymous]
-        public IActionResult RehashExistingPasswords()
-        {
-            var users = _context.Users.ToList();
-
-            foreach (var user in users)
-            {
-                // ⚠️ assumes PasswordHash currently stores plain text
-                var plainPassword = user.PasswordHash;
-
-                user.PasswordHash =
-                    _passwordHasher.HashPassword(user, plainPassword);
-            }
-
-            _context.SaveChanges();
-
-            return Ok("All passwords rehashed successfully");
-        }
-        [HttpPost("force-reset-admin")]
-        [AllowAnonymous]
-        public IActionResult ForceResetAdmin()
-        {
-            var user = _context.Users
-                .FirstOrDefault(u => u.Email == "admin@company.com");
-
-            if (user == null)
-                return NotFound("Admin user not found");
-
-            user.PasswordHash =
-                _passwordHasher.HashPassword(user, "Admin@123");
-
-            _context.SaveChanges();
-
-            return Ok("Admin password reset to Admin@123");
-        }
-
+       
 
 
 
