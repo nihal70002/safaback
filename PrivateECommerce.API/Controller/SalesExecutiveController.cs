@@ -15,13 +15,19 @@ namespace PrivateECommerce.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly IOrderService _orderService;
+        private readonly ISalesProductService _salesProductService;
+        private readonly IAuthService _authService;
 
         public SalesExecutiveController(
             IUserService userService,
-            IOrderService orderService)
+            IOrderService orderService,
+            ISalesProductService salesProductService,
+            IAuthService authService)
         {
             _userService = userService;
             _orderService = orderService;
+            _salesProductService = salesProductService;
+            _authService = authService;
         }
 
         // ===========================
@@ -77,7 +83,6 @@ namespace PrivateECommerce.API.Controllers
         // ===========================
         // 4️⃣ ORDERS BY TYPE
         // ===========================
-        // type = pending | accepted | completed | rejected
         [HttpGet("orders/filter")]
         public IActionResult GetOrdersByType([FromQuery] string type)
         {
@@ -110,7 +115,7 @@ namespace PrivateECommerce.API.Controllers
         }
 
         // ===========================
-        // 5️⃣ PENDING ORDERS (OLD – KEEP)
+        // 5️⃣ PENDING ORDERS (OLD)
         // ===========================
         [HttpGet("orders/pending")]
         public IActionResult GetPendingOrders()
@@ -131,21 +136,16 @@ namespace PrivateECommerce.API.Controllers
 
         // ===========================
         // 7️⃣ REJECT ORDER
+        // ===========================
         [HttpPost("cancel/{orderId}")]
         public IActionResult CancelOrder(
-    int orderId,
-    [FromBody] RejectOrderDto dto
-)
+            int orderId,
+            [FromBody] RejectOrderDto dto)
         {
             _orderService.CancelOrder(orderId, dto.Reason);
             return Ok("Order cancelled by sales");
         }
 
-
-
-        // =====================================================
-        // 8️⃣ CUSTOMER → FULL ORDER HISTORY (🔥 NEW API)
-        // =====================================================
         // ===========================
         // 8️⃣ CUSTOMER → FULL ORDER HISTORY
         // ===========================
@@ -157,10 +157,37 @@ namespace PrivateECommerce.API.Controllers
                 customerId
             );
 
-            // ✅ Empty list is valid response
             return Ok(orders);
         }
-    }
+
+        // =====================================================
+        // 9️⃣ MY PRODUCT PERFORMANCE (🔥 NEW)
+        // =====================================================
+        [HttpGet("products/performance")]
+        public async Task<IActionResult> GetMyProductPerformance()
+        {
+            var products = await _salesProductService
+                .GetProductPerformanceAsync(SalesExecutiveId);
+
+            return Ok(products);
+        }
+
+        // =====================================================
+        // 🔐 10️⃣ CHANGE PASSWORD (SELF SERVICE)
+        // =====================================================
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword(
+     [FromBody] ChangePasswordDto dto)
+        {
+            await _authService.ChangePasswordAsync(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                dto.CurrentPassword,
+                dto.NewPassword
+            );
+
+            return Ok(new { message = "Password changed successfully" });
+        }
 
     }
-
+}

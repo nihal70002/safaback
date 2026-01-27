@@ -2,6 +2,7 @@
 using PrivateECommerce.API.DTOs.Admin;
 using PrivateECommerce.API.DTOs.Reports;
 using PrivateECommerce.API.Models;
+using PrivateECommerce.API.DTOs.Admin;
 
 namespace PrivateECommerce.API.Services
 {
@@ -11,7 +12,8 @@ namespace PrivateECommerce.API.Services
         // ADMIN
         // ============================
         void CreateCustomer(CreateUserDto dto);
-        IEnumerable<UserSummaryDto> GetAllUsers();
+        List<AdminCustomerDto> GetAllUsers();
+
         UserDetailsDto? GetUserDetails(int userId);
 
         IEnumerable<SalesExecutiveAdminSummaryDto> GetAllSalesExecutivesForAdmin();

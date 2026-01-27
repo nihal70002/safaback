@@ -1,4 +1,5 @@
-﻿using PrivateECommerce.API.Data;
+﻿using Microsoft.AspNetCore.Identity;
+using PrivateECommerce.API.Data;
 using PrivateECommerce.API.Models;
 
 namespace PrivateECommerce.API.Seed
@@ -13,6 +14,8 @@ namespace PrivateECommerce.API.Seed
                 return;
             }
 
+            var hasher = new PasswordHasher<User>();
+
             var admin = new User
             {
                 Name = "Super Admin",
@@ -20,9 +23,10 @@ namespace PrivateECommerce.API.Seed
                 CompanyName = "Private E-Commerce",
                 PhoneNumber = "7591907000",
                 Role = "Admin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                PasswordHash = hasher.HashPassword(null!, "Admin@123"),
                 IsActive = true
             };
+
 
             context.Users.Add(admin);
             context.SaveChanges();

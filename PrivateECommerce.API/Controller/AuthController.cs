@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using PrivateECommerce.API.Data;
 using PrivateECommerce.API.DTOs;
+using PrivateECommerce.API.DTOs.Auth;
 using PrivateECommerce.API.Models;
+using PrivateECommerce.API.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -15,13 +19,21 @@ namespace PrivateECommerce.API.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _config;
+        private readonly IAuthService _authService;
+        private readonly PasswordHasher<User> _passwordHasher = new();
 
-        public AuthController(AppDbContext context, IConfiguration config)
+
+        public AuthController(
+            AppDbContext context,
+            IConfiguration config,
+            IAuthService authService)
         {
             _context = context;
             _config = config;
+            _authService = authService;
         }
 
+        // 🔐 LOGIN
         [HttpPost("login")]
         public IActionResult Login(LoginRequestDto request)
         {
@@ -29,27 +41,32 @@ namespace PrivateECommerce.API.Controllers
                 string.IsNullOrWhiteSpace(request.LoginId) ||
                 string.IsNullOrWhiteSpace(request.Password))
             {
-                return BadRequest("Invalid loginId or password");
+                return BadRequest("Invalid login credentials");
             }
 
-            var user = _context.Users
-     .FirstOrDefault(u =>
-         u.Email == request.LoginId ||
-         u.PhoneNumber == request.LoginId
-     );
-
+            var user = _context.Users.FirstOrDefault(u =>
+                u.Email == request.LoginId ||
+                u.PhoneNumber == request.LoginId);
 
             if (user == null)
-            {
                 return Unauthorized("Invalid login credentials");
+
+            var result = _passwordHasher.VerifyHashedPassword(
+                user,
+                user.PasswordHash,
+                request.Password
+            );
+
+            if (result == PasswordVerificationResult.Failed)
+                return Unauthorized("Invalid login credentials");
+
+            // ✅ Optional: auto-upgrade hash
+            if (result == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                user.PasswordHash =
+                    _passwordHasher.HashPassword(user, request.Password);
+                _context.SaveChanges();
             }
-
-
-            bool passwordValid = BCrypt.Net.BCrypt.Verify(
-                request.Password, user.PasswordHash);
-
-            if (!passwordValid)
-                return Unauthorized("Invalid password");
 
             var token = GenerateJwtToken(user);
 
@@ -63,7 +80,67 @@ namespace PrivateECommerce.API.Controllers
             });
         }
 
-        // 🔑 THIS METHOD MUST BE INSIDE THE CLASS
+        
+
+        // 🔑 CHANGE PASSWORD (Logged-in)
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword(
+            [FromBody] ChangePasswordDto dto)
+        {
+            if (dto == null ||
+                string.IsNullOrWhiteSpace(dto.CurrentPassword) ||
+                string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                return BadRequest("Invalid password data");
+            }
+
+            await _authService.ChangePasswordAsync(
+                User.FindFirstValue(ClaimTypes.NameIdentifier),
+                dto.CurrentPassword,
+                dto.NewPassword
+            );
+
+            return Ok(new { message = "Password changed successfully" });
+        }
+
+        // 📧 FORGOT PASSWORD (SAFE & IDEMPOTENT)
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(
+      [FromBody] ForgotPasswordDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest("Email is required");
+
+            await _authService.ForgotPasswordAsync(dto.Email);
+
+            return Ok("If email exists, reset link sent");
+        }
+
+
+
+        // 🔄 RESET PASSWORD
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(
+            [FromBody] ResetPasswordDto dto)
+        {
+            if (dto == null ||
+                string.IsNullOrWhiteSpace(dto.Token) ||
+                string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                return BadRequest("Invalid reset data");
+            }
+
+            await _authService.ResetPasswordAsync(
+                dto.Token,
+                dto.NewPassword);
+
+            return Ok("Password reset successful");
+        }
+      
+
+
+        // 🔐 JWT TOKEN GENERATION
         private string GenerateJwtToken(User user)
         {
             var claims = new[]

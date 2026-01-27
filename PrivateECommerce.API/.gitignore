@@ -1,7 +1,9 @@
 # Visual Studio
-.vs/
+
 bin/
 obj/
+.vs/
+
 
 # User-specific files
 *.user
