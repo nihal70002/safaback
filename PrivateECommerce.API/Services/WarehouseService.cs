@@ -93,15 +93,16 @@ namespace PrivateECommerce.API.Services
                     OrderId = o.Id,
                     OrderDate = o.OrderDate,
                     Status = o.Status,
-
-                    // ✅ THIS LINE FIXES YOUR ISSUE
                     TotalAmount = o.TotalAmount,
 
                     Customer = new
                     {
                         Name = o.User.Name,
                         Email = o.User.Email,
-                        PhoneNumber = o.User.PhoneNumber
+                        PhoneNumber = o.User.PhoneNumber,
+
+                        // 🔥 ADDED
+                        CompanyName = o.User.CompanyName
                     },
 
                     SalesExecutive = o.SalesExecutive == null ? null : new
@@ -114,14 +115,15 @@ namespace PrivateECommerce.API.Services
                     {
                         ProductName = i.ProductVariant.Product.Name,
                         VariantSize = i.ProductVariant.Size,
+                        ProductCode = i.ProductVariant.ProductCode,
                         Quantity = i.Quantity
                     }).ToList(),
 
                     TotalQuantity = o.OrderItems.Sum(i => i.Quantity)
                 })
-
                 .ToList();
         }
+
 
         public object GetOrderDetails(int orderId)
         {
@@ -154,10 +156,16 @@ namespace PrivateECommerce.API.Services
                 {
                     ProductName = i.ProductVariant.Product.Name,
                     Size = i.ProductVariant.Size,
+
+                    // 🔥 ADD THIS
+                    ProductCode = i.ProductVariant.ProductCode,
+
                     Quantity = i.Quantity,
                     UnitPrice = i.UnitPrice,
                     LineTotal = i.Quantity * i.UnitPrice
                 })
+
+
             };
         }
         public void DispatchOrder(int orderId)

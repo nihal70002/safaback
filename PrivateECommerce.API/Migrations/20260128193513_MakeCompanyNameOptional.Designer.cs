@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PrivateECommerce.API.Data;
@@ -11,9 +12,11 @@ using PrivateECommerce.API.Data;
 namespace PrivateECommerce.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260128193513_MakeCompanyNameOptional")]
+    partial class MakeCompanyNameOptional
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,16 +192,7 @@ namespace PrivateECommerce.API.Migrations
                     b.Property<DateTime?>("AdminApprovedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ApprovedByRole")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTime?>("DeliveredAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DispatchedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool?>("IsRejectedBySales")
@@ -237,17 +231,11 @@ namespace PrivateECommerce.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt");
-
                     b.HasIndex("SalesExecutiveId");
-
-                    b.HasIndex("Status");
 
                     b.HasIndex("UserId");
 
                     b.HasIndex("WarehouseUserId");
-
-                    b.HasIndex("Status", "CreatedAt");
 
                     b.ToTable("Orders");
                 });
@@ -303,6 +291,7 @@ namespace PrivateECommerce.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ImageUrl")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
@@ -310,9 +299,6 @@ namespace PrivateECommerce.API.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProductCode")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -338,9 +324,6 @@ namespace PrivateECommerce.API.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("ProductCode")
-                        .HasColumnType("text");
-
                     b.Property<int>("ProductId")
                         .HasColumnType("integer")
                         .HasColumnName("ProductId");
@@ -353,9 +336,6 @@ namespace PrivateECommerce.API.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProductCode")
-                        .IsUnique();
 
                     b.HasIndex("ProductId");
 

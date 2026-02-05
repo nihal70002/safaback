@@ -5,25 +5,35 @@ namespace PrivateECommerce.API.DTOs.Admin
 {
     public class CustomerOrderDto
     {
-        // Customer info
+        // ======================
+        // CUSTOMER INFO
+        // ======================
         public int CustomerId { get; set; }
         public string Name { get; set; } = null!;
         public string CompanyName { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
 
-        // Summary
+        // ======================
+        // SUMMARY
+        // ======================
         public int TotalOrders { get; set; }
         public decimal TotalAmount { get; set; }
 
-        // Order info
+        // ======================
+        // ORDER INFO
+        // ======================
         public int OrderId { get; set; }
         public DateTime OrderDate { get; set; }
         public string Status { get; set; } = null!;
 
-        // ✅ THIS IS THE MISSING PIECE
+        // ✅ ADD THIS (IMPORTANT)
+        public DateTime? DeliveredDate { get; set; }
+
+        // ======================
+        // ITEMS & NESTED ORDERS
+        // ======================
         public List<CustomerOrderItemDto> Items { get; set; } = new();
         public List<CustomerOrderDto> Orders { get; set; } = new();
-
     }
 }
