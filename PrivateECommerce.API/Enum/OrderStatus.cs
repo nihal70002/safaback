@@ -1,18 +1,22 @@
-﻿namespace PrivateECommerce.API.Enum
+﻿namespace PrivateECommerce.API.Enum;
+public enum OrderStatus
 {
-    public enum OrderStatus
-    {
-        // SALES SIDE
-        PendingSalesApproval,
-        ApprovedBySales,
-        RejectedBySales,
+    // SALES
+    PendingSalesApproval,
+    ApprovedBySales,
+    RejectedBySales,
 
-        // ADMIN SIDE
-        PendingAdminApproval,
-        Confirmed,
-        Dispatched,
-        Delivered,
-        Cancelled,
-        
-    }
+    // WAREHOUSE
+    PendingWarehouseApproval,
+    ApprovedByWarehouse,
+    RejectedByWarehouse,
+
+    // ADMIN (OPTIONAL / FUTURE)
+    PendingAdminApproval,
+    Confirmed,
+
+    // FULFILLMENT
+    Dispatched,
+    Delivered,
+    Cancelled
 }

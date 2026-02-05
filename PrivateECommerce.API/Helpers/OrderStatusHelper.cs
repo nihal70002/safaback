@@ -8,14 +8,21 @@ namespace PrivateECommerce.API.Helpers
         {
             return internalStatus switch
             {
-                // SALES SIDE
+                // SALES
                 nameof(OrderStatus.PendingSalesApproval) => "Pending",
                 nameof(OrderStatus.ApprovedBySales) => "Pending",
                 nameof(OrderStatus.RejectedBySales) => "Cancelled",
 
-                // ADMIN SIDE
+                // WAREHOUSE
+                nameof(OrderStatus.PendingWarehouseApproval) => "Pending",
+                nameof(OrderStatus.ApprovedByWarehouse) => "Pending",
+                nameof(OrderStatus.RejectedByWarehouse) => "Cancelled",
+
+                // ADMIN
                 nameof(OrderStatus.PendingAdminApproval) => "Pending",
                 nameof(OrderStatus.Confirmed) => "Confirmed",
+
+                // FULFILLMENT
                 nameof(OrderStatus.Dispatched) => "Dispatched",
                 nameof(OrderStatus.Delivered) => "Delivered",
                 nameof(OrderStatus.Cancelled) => "Cancelled",

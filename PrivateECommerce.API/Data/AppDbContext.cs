@@ -19,7 +19,8 @@ namespace PrivateECommerce.API.Data
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Brand> Brands { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
-
+        public DbSet<StockMovement> StockMovements { get; set; }
+        public DbSet<ProductStock> ProductStocks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,11 +33,7 @@ namespace PrivateECommerce.API.Data
                 .HasForeignKey(ci => ci.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<ProductVariant>()
-    .HasOne(v => v.Product)
-    .WithMany(p => p.Variants)
-    .HasForeignKey(v => v.ProductId);
-
+         
 
             // ================= CART ↔ USER =================
             modelBuilder.Entity<Cart>()
@@ -52,40 +49,59 @@ namespace PrivateECommerce.API.Data
                 .HasForeignKey(ci => ci.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // =====================================================
-            // 🔥 ORDER ↔ USER (CUSTOMER)
-            // =====================================================
+         
+            // ================= USER =================
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.PhoneNumber)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.SalesExecutive)
+                .WithMany(se => se.AssignedCustomers)
+                .HasForeignKey(u => u.SalesExecutiveId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ================= ORDER ↔ USER (CUSTOMER) =================
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.OrdersPlaced)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // =====================================================
-            // 🔥 ORDER ↔ USER (SALES EXECUTIVE)
-            // =====================================================
+            // ================= ORDER ↔ USER (SALES EXECUTIVE) =================
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.SalesExecutive)
                 .WithMany(u => u.OrdersHandled)
                 .HasForeignKey(o => o.SalesExecutiveId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<User>()
-      .HasIndex(u => u.Email)
-      .IsUnique();
+            // ================= 🔥 ORDER INDEXES =================
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.Status);
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.PhoneNumber)
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.CreatedAt);
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => new { o.Status, o.CreatedAt });
+
+            // ================= PRODUCT ↔ VARIANT =================
+            modelBuilder.Entity<ProductVariant>()
+                .HasOne(v => v.Product)
+                .WithMany(p => p.Variants)
+                .HasForeignKey(v => v.ProductId);
+
+            // ================= PRODUCT VARIANT =================
+            modelBuilder.Entity<ProductVariant>()
+                .HasIndex(v => v.ProductCode)
                 .IsUnique();
 
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<User>()
-    .HasOne(u => u.SalesExecutive)
-    .WithMany(se => se.AssignedCustomers)
-    .HasForeignKey(u => u.SalesExecutiveId)
-    .OnDelete(DeleteBehavior.Restrict);
-
         }
+
     }
+
 }
