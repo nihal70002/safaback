@@ -3,13 +3,10 @@
     public class AdminUpdateProductDto
     {
         public required string Name { get; set; }
-
         public int CategoryId { get; set; }
-
-        public int BrandId { get; set; }   // ✅ ADD THIS
-
+        public int BrandId { get; set; }
         public required string Description { get; set; }
-
-        public required string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
     }
+
 }

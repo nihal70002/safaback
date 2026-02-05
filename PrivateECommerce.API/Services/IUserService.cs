@@ -11,6 +11,8 @@ namespace PrivateECommerce.API.Services
         // ============================
         // ADMIN
         // ============================
+        void ReactivateSalesExecutive(int salesExecutiveId);
+
         void CreateCustomer(CreateUserDto dto);
         List<AdminCustomerDto> GetAllUsers();
             
@@ -41,7 +43,8 @@ namespace PrivateECommerce.API.Services
         void AssignSalesExecutiveToCustomer(int customerId, int salesExecutiveId);
 
         // ✅ DELETE
-        void DeleteSalesExecutive(int salesExecutiveId);
+        void InactivateSalesExecutive(int salesExecutiveId);
+
 
         List<CustomerDto> GetCustomersForSalesExecutive(int salesExecutiveId);
 

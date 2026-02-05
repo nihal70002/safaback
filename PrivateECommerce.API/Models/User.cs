@@ -18,8 +18,7 @@ namespace PrivateECommerce.API.Models
         [Required]
         public string PhoneNumber { get; set; } = null!;
 
-        [Required]
-        public string CompanyName { get; set; } = null!;
+        public string? CompanyName { get; set; } = null!;
 
         [Required]
         public string Role { get; set; } = "Customer";

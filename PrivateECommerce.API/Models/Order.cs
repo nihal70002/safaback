@@ -30,11 +30,32 @@ namespace PrivateECommerce.API.Models
         // not null → Approved by Sales
         public DateTime? SalesApprovedAt { get; set; }
 
+
+        // =======================
+        // WAREHOUSE WORKFLOW
+        // =======================
+
+        public int? WarehouseUserId { get; set; }
+
+        [JsonIgnore]
+        public User? WarehouseUser { get; set; }
+
+        public DateTime? WarehouseApprovedAt { get; set; }
+
+        public string? WarehouseRemarks { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+
         // =======================
         // ADMIN WORKFLOW
         // =======================
         public string Status { get; set; } = "PendingSalesApproval";
         // Confirmed | Dispatched | Delivered
+
+        // WHO approved (Sales / Warehouse / Admin)
+        public string? ApprovedByRole { get; set; }
+
 
         public DateTime? AdminApprovedAt { get; set; }
 
@@ -44,6 +65,8 @@ namespace PrivateECommerce.API.Models
         // =======================
         // ORDER INFO
         // =======================
+        public DateTime? DispatchedAt { get; set; }
+        
 
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public decimal TotalAmount { get; set; }

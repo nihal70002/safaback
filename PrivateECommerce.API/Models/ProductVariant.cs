@@ -11,6 +11,9 @@ namespace PrivateECommerce.API.Models
         public int ProductId { get; set; }
 
         public Product Product { get; set; } = null!;
+        public int LowStockThreshold { get; set; } = 10;
+        public string? ProductCode { get; set; } 
+
 
         public required string Size { get; set; }
         public int Stock { get; set; }

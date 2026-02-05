@@ -4,13 +4,13 @@ public class ProductListDto
 {
     public int ProductId { get; set; }
     public string Name { get; set; }
-
+    public string ProductCode { get; set; }
     public int CategoryId { get; set; }
     public string CategoryName { get; set; }
 
     public int BrandId { get; set; }          // ✅ ADD
     public string BrandName { get; set; }     // ✅ ADD
-
+    public string Description { get; set; }
     public string ImageUrl { get; set; }
     public bool IsActive { get; set; }
 

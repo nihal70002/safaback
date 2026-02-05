@@ -19,7 +19,8 @@ namespace PrivateECommerce.API.Services
         CustomerOrderDto GetCustomerOrderHistory(int salesExecutiveId, int customerId);
         List<SalesOrderListDto> GetPendingOrdersForSales(int salesExecutiveId);
         List<SalesOrderListDto> GetOrdersForSalesExecutive(int salesExecutiveId);
-        void ApproveBySales(int orderId, int salesId);
+       void ApproveBySales(int orderId, int approverUserId, bool isAdmin = false);
+
         void RejectBySales(int orderId, int salesId);
 
         // ===========================
@@ -28,12 +29,15 @@ namespace PrivateECommerce.API.Services
         PagedResponseDto<AdminOrderListDto> GetFilteredOrders(string? status, bool today, int page, int pageSize);
         IEnumerable<AdminOrderListDto> GetRecentOrders(int count);
         AdminOrderDetailDto GetOrderById(int orderId);
-
-        
-         Task<OrderDetailsDto?> GetMyOrderDetailsAsync(int userId, int orderId);
+        IEnumerable<object> GetPendingOrdersForWarehouse();
         
 
-        void RevertOrderStatus(int orderId);
+
+        Task<OrderDetailsDto?> GetMyOrderDetailsAsync(int userId, int orderId);
+
+
+        void RevertOrderStatus(int orderId, bool isConfirmed);
+
 
         void ConfirmOrder(int orderId);
         void DispatchOrder(int orderId);

@@ -64,6 +64,16 @@ namespace PrivateECommerce.API.Services
                 })
                 .ToList();
         }
+        public void ReactivateSalesExecutive(int salesExecutiveId)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Id == salesExecutiveId);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            user.IsActive = true;
+            _context.SaveChanges();
+        }
 
 
         public UserDetailsDto? GetUserDetails(int userId)
@@ -91,6 +101,7 @@ namespace PrivateECommerce.API.Services
         public IEnumerable<SalesExecutiveAdminSummaryDto> GetAllSalesExecutivesForAdmin()
         {
             return _context.Users
+                .AsNoTracking()
                 .Where(u => u.Role == "SalesExecutive")
                 .Select(u => new SalesExecutiveAdminSummaryDto
                 {
@@ -98,10 +109,22 @@ namespace PrivateECommerce.API.Services
                     Name = u.Name,
                     Email = u.Email,
                     CompanyName = u.CompanyName,
-                    PhoneNumber = u.PhoneNumber
+                    PhoneNumber = u.PhoneNumber,
+
+                    // ✅ THIS WAS MISSING
+                    IsActive = u.IsActive,
+
+                    // (your existing counts if any)
+                    TotalCustomers = 0,
+                    TotalOrders = 0,
+                    AcceptedOrders = 0,
+                    RejectedOrders = 0,
+                    PendingOrders = 0,
+                    TotalOrderValue = 0
                 })
                 .ToList();
         }
+
 
         public User CreateSalesExecutive(CreateSalesExecutiveDto dto)
         {
@@ -286,9 +309,20 @@ namespace PrivateECommerce.API.Services
             var user = _context.Users.Find(salesExecutiveId)
                 ?? throw new Exception("Sales Executive not found");
 
-            _context.Users.Remove(user);
+            user.IsActive = false; // 👈 soft delete
             _context.SaveChanges();
         }
+        public void InactivateSalesExecutive(int salesExecutiveId)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Id == salesExecutiveId);
+
+            if (user == null)
+                throw new Exception("Sales Executive not found");
+
+            user.IsActive = false;
+            _context.SaveChanges();
+        }
+
 
         public List<CustomerDto> GetCustomersForSalesExecutive(int salesExecutiveId)
         {

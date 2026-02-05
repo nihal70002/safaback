@@ -135,16 +135,25 @@ namespace PrivateECommerce.API.Controllers
             _userService.UpdateSalesExecutive(salesExecutiveId, dto);
             return Ok("Sales Executive updated successfully");
         }
-
         // ============================
-        // DELETE SALES EXECUTIVE
+        // ADMIN: INACTIVATE SALES EXECUTIVE
         // ============================
-        [HttpDelete("{salesExecutiveId}")]
-        public IActionResult DeleteSalesExecutive(int salesExecutiveId)
+        [HttpPost("inactivate/{salesExecutiveId}")]
+        public IActionResult InactivateSalesExecutive(int salesExecutiveId)
         {
-            _userService.DeleteSalesExecutive(salesExecutiveId);
-            return Ok("Sales Executive deleted successfully");
+            try
+            {
+                _userService.InactivateSalesExecutive(salesExecutiveId);
+                return Ok(new { message = "Sales Executive inactivated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
+
+        
         // ============================
         // ADMIN: ASSIGN SALES EXECUTIVE TO CUSTOMER
         // ============================
@@ -155,6 +164,20 @@ namespace PrivateECommerce.API.Controllers
         {
             _userService.AssignSalesExecutiveToCustomer(customerId, dto.SalesExecutiveId);
             return Ok(new { message = "Sales Executive assigned successfully" });
+        }
+        // Change to [HttpPost] and fix the route template to match frontend: /api/admin/reactivate/{id}
+        [HttpPost("reactivate/{salesExecutiveId}")]
+        public IActionResult ReactivateSalesExecutive(int salesExecutiveId)
+        {
+            try
+            {
+                _userService.ReactivateSalesExecutive(salesExecutiveId);
+                return Ok(new { message = "Sales Executive reactivated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
 

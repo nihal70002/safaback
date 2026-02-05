@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PrivateECommerce.API.DTOs;
 using PrivateECommerce.API.Services;
 
 namespace PrivateECommerce.API.Controllers
@@ -13,6 +14,13 @@ namespace PrivateECommerce.API.Controllers
         {
             _productService = productService;
         }
+        [HttpPost("bulk")]
+        public IActionResult BulkCreateProducts(
+    [FromBody] List<AdminBulkCreateProductDto> products)
+        {
+            _productService.BulkCreate(products);
+            return Ok(new { message = "Bulk products created successfully" });
+        }
 
         // ===========================
         // LIST PRODUCTS (USER) - PAGINATED
@@ -26,6 +34,14 @@ namespace PrivateECommerce.API.Controllers
             var result = _productService.GetProducts(page, pageSize);
             return Ok(result);
         }
+        [HttpDelete("{productId}")]
+        public async Task<IActionResult> DeleteProduct(int productId)
+        {
+            await _productService.DeleteProductAsync(productId);
+            return Ok();
+        }
+
+
 
         // ===========================
         // PRODUCT DETAILS (USER)

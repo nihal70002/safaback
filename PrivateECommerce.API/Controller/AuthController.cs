@@ -55,11 +55,20 @@ namespace PrivateECommerce.API.Controllers
             if (user == null)
                 return Unauthorized("Invalid login credentials");
 
+            // 🚫 BLOCK INACTIVE USERS
+            if (!user.IsActive)
+            {
+                return Unauthorized(
+                    "Your account is inactive. Please contact admin."
+                );
+            }
+
             var result = _passwordHasher.VerifyHashedPassword(
                 user,
                 user.PasswordHash,
                 request.Password
             );
+
 
             if (result == PasswordVerificationResult.Failed)
                 return Unauthorized("Invalid login credentials");

@@ -10,7 +10,7 @@ namespace PrivateECommerce.API.Controllers
 {
     [ApiController]
     [Route("api/sales")]
-    [Authorize(Roles = "SalesExecutive")]
+    [Authorize(Roles = "SalesExecutive,Admin")]
     public class SalesExecutiveController : ControllerBase
     {
         private readonly IUserService _userService;

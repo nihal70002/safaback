@@ -59,6 +59,15 @@ namespace PrivateECommerce.API.Controllers
             _productService.UpdateProductVariant(variantId, dto);
             return Ok("Variant updated successfully");
         }
+        [HttpPost("{productId}/variant")]
+        public IActionResult AddVariant(
+    int productId,
+    AdminCreateProductVariantDto dto)
+        {
+            _productService.AddProductVariant(productId, dto);
+            return Ok("Variant added");
+        }
+
 
         [HttpGet("low-stock")]
         public IActionResult LowStock([FromQuery] int threshold = 5)
@@ -66,11 +75,12 @@ namespace PrivateECommerce.API.Controllers
             return Ok(_productService.GetLowStockVariants(threshold));
         }
         [HttpDelete("{productId}")]
-        public IActionResult Delete(int productId)
+        public async Task<IActionResult> DeleteProduct(int productId)
         {
-            _productService.DeleteProduct(productId);
-            return Ok("Product deleted");
+            await _productService.DeleteProductAsync(productId);
+            return Ok();
         }
+
 
 
 

@@ -7,12 +7,12 @@ namespace PrivateECommerce.API.Models
     {
         public int Id { get; set; }
         public required string Name { get; set; }
-
+        public string? ProductCode { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
 
         public required string Description { get; set; }
-        public required string ImageUrl { get; set; }
+        public  string? ImageUrl { get; set; }
 
         public bool IsActive { get; set; } = true;
         public int BrandId { get; set; }

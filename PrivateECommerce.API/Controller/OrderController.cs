@@ -37,7 +37,7 @@ namespace PrivateECommerce.API.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpGet("my/{orderId}")]
         public async Task<IActionResult> GetMyOrderDetails(int orderId)
         {

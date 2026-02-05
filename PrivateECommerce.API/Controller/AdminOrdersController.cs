@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PrivateECommerce.API.DTOs.Orders;
 using PrivateECommerce.API.Services;
+using PrivateECommerce.API.DTOs;
 
 namespace PrivateECommerce.API.Controllers
 {
@@ -103,11 +104,15 @@ namespace PrivateECommerce.API.Controllers
         // REVERT ORDER
         // ==========================
         [HttpPut("{orderId}/revert")]
-        public IActionResult RevertOrder(int orderId)
+        public IActionResult RevertOrder(
+    int orderId,
+    [FromBody] RevertOrderRequest request
+)
         {
-            _orderService.RevertOrderStatus(orderId);
-            return Ok("Order reverted");
+            _orderService.RevertOrderStatus(orderId, request.IsConfirmed);
+            return Ok();
         }
+
 
 
 

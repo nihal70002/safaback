@@ -32,6 +32,7 @@ namespace PrivateECommerce.API.Services
                 {
                     ProductId = p.Id,
                     Name = p.Name,
+                    ProductCode = p.ProductCode,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
                     BrandId = p.BrandId,                    // ✅ ADD
@@ -42,6 +43,7 @@ namespace PrivateECommerce.API.Services
                     {
                         VariantId = v.Id,
                         Size = v.Size,
+                        ProductCode = v.ProductCode,
                         Price = v.Price,
                         Stock = v.Stock
                     }).ToList()
@@ -157,6 +159,7 @@ namespace PrivateECommerce.API.Services
                 ProductId = product.Id,
                 Name = product.Name,
                 CategoryId = product.CategoryId,
+                ProductCode = product.ProductCode,
                 CategoryName = product.Category.Name,
                 Description = product.Description,
                 ImageUrl = product.ImageUrl,
@@ -176,11 +179,12 @@ namespace PrivateECommerce.API.Services
         public void CreateProduct(AdminCreateProductDto dto)
         {
             if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
-                throw new Exception("Invalid Category");
+                throw new ValidationException("Invalid category selected");
 
             if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
-                throw new Exception("Invalid Brand");
+                throw new ValidationException("Invalid Brand");
 
+            // ✅ Create Product (NO ProductCode here)
             var product = new Product
             {
                 Name = dto.Name,
@@ -193,16 +197,44 @@ namespace PrivateECommerce.API.Services
             };
 
             _context.Products.Add(product);
-            _context.SaveChanges();
+            _context.SaveChanges(); // must save to get ProductId
 
-            if (dto.Variants != null)
+            var duplicateSizes = dto.Variants
+    .GroupBy(v => v.Size.Trim().ToLower())
+    .Where(g => g.Count() > 1)
+    .Select(g => g.Key)
+    .ToList();
+
+            if (duplicateSizes.Any())
+            {
+                throw new ValidationException(
+                    $"Duplicate sizes not allowed: {string.Join(", ", duplicateSizes)}"
+                );
+            }
+
+            // ✅ Add Variants
+            if (dto.Variants != null && dto.Variants.Any())
             {
                 foreach (var v in dto.Variants)
                 {
+                    // ✅ Check variant product code uniqueness
+                    var sku = v.ProductCode?.Trim();
+
+                    if (string.IsNullOrWhiteSpace(sku))
+                        throw new ValidationException("SKU / ProductCode is required");
+
+                    bool skuExists = _context.ProductVariants.Any(pv =>
+                        pv.ProductCode.ToLower() == sku.ToLower());
+
+                    if (skuExists)
+                        throw new ValidationException($"SKU already exists: {sku}");
+
+
                     _context.ProductVariants.Add(new ProductVariant
                     {
                         ProductId = product.Id,
                         Size = v.Size,
+                        ProductCode = v.ProductCode,
                         Price = v.Price,
                         Stock = v.Stock
                     });
@@ -214,6 +246,7 @@ namespace PrivateECommerce.API.Services
 
 
 
+
         // ===========================
         // ADMIN – UPDATE PRODUCT
         // ===========================
@@ -221,24 +254,25 @@ namespace PrivateECommerce.API.Services
         {
             var product = _context.Products.FirstOrDefault(p => p.Id == productId);
             if (product == null)
-                throw new Exception("Product not found");
+                throw new ValidationException("Product not found");
 
-            // Optional validation (recommended)
             if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
-                throw new Exception("Invalid Brand");
+                throw new ValidationException("Invalid Brand");
 
             if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
-                throw new Exception("Invalid Category");
+                throw new ValidationException("Invalid Category");
 
             product.Name = dto.Name;
             product.CategoryId = dto.CategoryId;
-            product.BrandId = dto.BrandId;     // ✅ MAIN FIX
+            
+            product.BrandId = dto.BrandId;
             product.Description = dto.Description;
             product.ImageUrl = dto.ImageUrl;
 
             _context.SaveChanges();
             IncrementCacheVersion();
         }
+
 
         // ===========================
         // ADMIN – TOGGLE PRODUCT
@@ -257,16 +291,22 @@ namespace PrivateECommerce.API.Services
         // ===========================
         // ADMIN – DELETE PRODUCT (SOFT)
         // ===========================
-        public void DeleteProduct(int productId)
+        public async Task DeleteProductAsync(int productId)
         {
-            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
-            if (product == null) throw new Exception("Product not found");
+            var product = await _context.Products
+                .Include(p => p.Variants)
+                .FirstOrDefaultAsync(p => p.Id == productId);
 
-            product.IsActive = false;
-            _context.SaveChanges();
+            if (product == null)
+                throw new Exception("Product not found");
 
-            IncrementCacheVersion();
+            // 🔥 HARD DELETE
+            _context.ProductVariants.RemoveRange(product.Variants);
+            _context.Products.Remove(product);
+
+            await _context.SaveChangesAsync();
         }
+
 
         // ===========================
         // ADMIN – UPDATE VARIANT
@@ -274,15 +314,86 @@ namespace PrivateECommerce.API.Services
         public void UpdateProductVariant(int variantId, AdminUpdateProductVariantDto dto)
         {
             var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId);
-            if (variant == null) throw new Exception("Variant not found");
+            if (variant == null)
+                throw new ValidationException("Variant not found");
 
-            variant.Size = dto.Size;
+            // ---------- SIZE VALIDATION ----------
+            var size = dto.Size?.Trim();
+
+            if (string.IsNullOrWhiteSpace(size))
+                throw new ValidationException("Size cannot be empty");
+
+            bool sizeExists = _context.ProductVariants.Any(v =>
+                v.ProductId == variant.ProductId &&
+                v.Size.ToLower() == size.ToLower() &&
+                v.Id != variantId
+            );
+
+            if (sizeExists)
+                throw new ValidationException($"Size '{size}' already exists for this product");
+
+            // ---------- SKU VALIDATION ----------
+            var sku = dto.ProductCode?.Trim();
+
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ValidationException("SKU cannot be empty");
+
+            bool skuExists = _context.ProductVariants.Any(v =>
+                v.ProductCode.ToLower() == sku.ToLower() &&
+                v.Id != variantId
+            );
+
+            if (skuExists)
+                throw new ValidationException($"SKU already exists: {sku}");
+
+            // ---------- UPDATE ----------
+            variant.Size = size;
             variant.Price = dto.Price;
+            variant.ProductCode = sku;
             variant.Stock = dto.Stock;
 
             _context.SaveChanges();
             IncrementCacheVersion();
         }
+
+        public void BulkCreate(List<AdminBulkCreateProductDto> products)
+        {
+            using var transaction = _context.Database.BeginTransaction();
+
+            foreach (var dto in products)
+            {
+                var product = new Product
+                {
+                    Name = dto.Name,
+                    CategoryId = dto.CategoryId,
+                    BrandId = dto.BrandId,
+                    Description = dto.Description,
+                    ImageUrl = dto.ImageUrl
+                };
+
+                _context.Products.Add(product);
+                _context.SaveChanges(); // get product.Id
+
+                foreach (var v in dto.Variants)
+                {
+                    _context.ProductVariants.Add(new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        Size = v.Size,
+                        ProductCode = v.ProductCode,
+                        Price = v.Price
+                    });
+                }
+            }
+
+            _context.SaveChanges();
+            transaction.Commit();
+        }
+
+
+
+
+
 
         public void UpdateVariantStock(int variantId, int stock)
         {
@@ -294,6 +405,47 @@ namespace PrivateECommerce.API.Services
 
             IncrementCacheVersion();
         }
+        public void AddProductVariant(int productId, AdminCreateProductVariantDto dto)
+        {
+            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+            if (product == null)
+                throw new ValidationException("Product not found");
+
+            var size = dto.Size?.Trim();
+            if (string.IsNullOrWhiteSpace(size))
+                throw new ValidationException("Size cannot be empty");
+
+            bool sizeExists = _context.ProductVariants.Any(v =>
+                v.ProductId == productId &&
+                v.Size.ToLower() == size.ToLower()
+            );
+
+            if (sizeExists)
+                throw new ValidationException($"Size '{size}' already exists");
+
+            var sku = dto.ProductCode?.Trim();
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ValidationException("SKU is required");
+
+            bool skuExists = _context.ProductVariants.Any(v =>
+                v.ProductCode.ToLower() == sku.ToLower());
+
+            if (skuExists)
+                throw new ValidationException($"SKU already exists: {sku}");
+
+            _context.ProductVariants.Add(new ProductVariant
+            {
+                ProductId = productId,
+                Size = size,
+                ProductCode = sku,
+                Price = dto.Price,
+                Stock = dto.Stock
+            });
+
+            _context.SaveChanges();
+            IncrementCacheVersion();
+        }
+
 
         // ===========================
         // ADMIN – LOW STOCK
