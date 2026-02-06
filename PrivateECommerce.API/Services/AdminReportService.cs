@@ -51,29 +51,56 @@ public class AdminReportService : IAdminReportService
     // 3️⃣ TOP SELLING PRODUCTS
     public IEnumerable<TopProductDto> GetTopProducts(int top = 5)
     {
-        return _context.OrderItems
+        // 1️⃣ DB-safe aggregation (SQL)
+        var data = _context.OrderItems
             .AsNoTracking()
             .Where(oi => oi.Order.Status == "Delivered")
-            .Include(oi => oi.ProductVariant)
-                .ThenInclude(pv => pv.Product)
-                    .ThenInclude(p => p.Images)
-            .GroupBy(oi => oi.ProductVariant.Product)
-            .Select(g => new TopProductDto
+            .Select(oi => new
             {
-                ProductName = g.Key.Name,
-
-                ImageUrl = g.Key.Images
-                    .OrderByDescending(i => i.IsPrimary)
-                    .Select(i => i.ImageUrl)
-                    .FirstOrDefault(),
-
+                ProductId = oi.ProductVariant.Product.Id,
+                ProductName = oi.ProductVariant.Product.Name,
+                Quantity = oi.Quantity,
+                Revenue = oi.Quantity * oi.UnitPrice
+            })
+            .GroupBy(x => new { x.ProductId, x.ProductName })
+            .Select(g => new
+            {
+                g.Key.ProductId,
+                g.Key.ProductName,
                 QuantitySold = g.Sum(x => x.Quantity),
-                Revenue = g.Sum(x => x.Quantity * x.UnitPrice)
+                Revenue = g.Sum(x => x.Revenue)
             })
             .OrderByDescending(x => x.QuantitySold)
             .Take(top)
-            .ToList();
+            .ToList(); // ✅ materialize here
+
+        // 2️⃣ Fetch primary images separately (safe)
+        var productIds = data.Select(x => x.ProductId).ToList();
+
+        var imageMap = _context.ProductImages
+            .AsNoTracking()
+            .Where(i => productIds.Contains(i.ProductId))
+            .GroupBy(i => i.ProductId)
+            .Select(g => new
+            {
+                ProductId = g.Key,
+                ImageUrl = g
+                    .OrderByDescending(i => i.IsPrimary)
+                    .Select(i => i.ImageUrl)
+                    .FirstOrDefault()
+            })
+            .ToDictionary(x => x.ProductId, x => x.ImageUrl);
+
+        // 3️⃣ Final projection
+        return data.Select(x => new TopProductDto
+        {
+            ProductName = x.ProductName,
+            ImageUrl = imageMap.GetValueOrDefault(x.ProductId),
+            QuantitySold = x.QuantitySold,
+            Revenue = x.Revenue
+        }).ToList();
     }
+
 
 
     public IEnumerable<CustomerProductInterestDto> GetCustomerProductInterest(int userId)

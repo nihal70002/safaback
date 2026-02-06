@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using PrivateECommerce.API.Data;
 using PrivateECommerce.API.DTOs;
 using PrivateECommerce.API.Models;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
 namespace PrivateECommerce.API.Services
@@ -13,7 +13,6 @@ namespace PrivateECommerce.API.Services
         private readonly IDistributedCache _cache;
 
         private const string ProductCacheVersionKey = "products_cache_version";
-        private const int MAX_IMAGES = 5;
 
         public ProductService(AppDbContext context, IDistributedCache cache)
         {
@@ -21,17 +20,15 @@ namespace PrivateECommerce.API.Services
             _cache = cache;
         }
 
-        // ===========================
-        // INTERNAL / ADMIN – ALL PRODUCTS
-        // ===========================
         public IEnumerable<ProductListDto> GetAllProducts()
         {
             return _context.Products
-                .AsNoTracking()
                 .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Variants)
-                .Include(p => p.Images)
+.Include(p => p.Brand)     // ✅ ADD
+.Include(p => p.Variants)
+.Include(p => p.Images)
+
+
                 .OrderByDescending(p => p.Id)
                 .Select(p => new ProductListDto
                 {
@@ -40,21 +37,19 @@ namespace PrivateECommerce.API.Services
                     ProductCode = p.ProductCode,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
-                    BrandId = p.BrandId,
+                    BrandId = p.BrandId,                    // ✅ ADD
                     BrandName = p.Brand.BrandName,
-
                     ImageUrls = p.Images
-                        .OrderByDescending(i => i.IsPrimary)
-                        .Select(i => i.ImageUrl)
-                        .ToList(),
+    .OrderByDescending(i => i.IsPrimary)
+    .Select(i => i.ImageUrl)
+    .ToList(),
 
                     PrimaryImageUrl = p.Images
-                        .OrderByDescending(i => i.IsPrimary)
-                        .Select(i => i.ImageUrl)
-                        .FirstOrDefault(),
+    .Where(i => i.IsPrimary)
+    .Select(i => i.ImageUrl)
+    .FirstOrDefault(),
 
                     IsActive = p.IsActive,
-
                     Variants = p.Variants.Select(v => new ProductVariantListDto
                     {
                         VariantId = v.Id,
@@ -67,8 +62,9 @@ namespace PrivateECommerce.API.Services
                 .ToList();
         }
 
+
         // ===========================
-        // CACHE HELPERS
+        // CACHE VERSION HELPERS
         // ===========================
         private int GetCacheVersion()
         {
@@ -83,33 +79,38 @@ namespace PrivateECommerce.API.Services
 
         private void IncrementCacheVersion()
         {
-            _cache.SetString(ProductCacheVersionKey, (GetCacheVersion() + 1).ToString());
+            var version = GetCacheVersion() + 1;
+            _cache.SetString(ProductCacheVersionKey, version.ToString());
         }
 
         // ===========================
-        // USER – PAGED LIST
+        // USER – LIST PRODUCTS (PAGED)
         // ===========================
         public PagedResponseDto<ProductListDto> GetProducts(int page, int pageSize)
         {
             int version = GetCacheVersion();
             string cacheKey = $"products_v{version}_page_{page}_{pageSize}";
 
-            var cached = _cache.GetString(cacheKey);
-            if (cached != null)
-                return JsonSerializer.Deserialize<PagedResponseDto<ProductListDto>>(cached)!;
+            var cachedData = _cache.GetString(cacheKey);
+            if (cachedData != null)
+            {
+                Console.WriteLine("PRODUCTS → REDIS CACHE HIT");
+                return JsonSerializer.Deserialize<PagedResponseDto<ProductListDto>>(cachedData);
+            }
+
+            Console.WriteLine("PRODUCTS → DB HIT");
 
             var query = _context.Products
-                .AsNoTracking()
                 .Where(p => p.IsActive)
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Variants)
-                .Include(p => p.Images);
+                .Include(p => p.Images)
+                .OrderByDescending(p => p.Id);
 
             var totalCount = query.Count();
 
             var items = query
-                .OrderByDescending(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new ProductListDto
@@ -118,13 +119,15 @@ namespace PrivateECommerce.API.Services
                     Name = p.Name,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
-                    BrandId = p.BrandId,
+                    BrandId = p.BrandId,               // ✅ ADD
                     BrandName = p.Brand.BrandName,
 
                     PrimaryImageUrl = p.Images
-                        .OrderByDescending(i => i.IsPrimary)
-                        .Select(i => i.ImageUrl)
-                        .FirstOrDefault(),
+    .Where(i => i.IsPrimary)
+    .Select(i => i.ImageUrl)
+    .FirstOrDefault(),
+
+
 
                     Variants = p.Variants.Select(v => new ProductVariantListDto
                     {
@@ -145,11 +148,14 @@ namespace PrivateECommerce.API.Services
                 HasMore = page * pageSize < totalCount
             };
 
-            _cache.SetString(cacheKey, JsonSerializer.Serialize(result),
+            _cache.SetString(
+                cacheKey,
+                JsonSerializer.Serialize(result),
                 new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
-                });
+                }
+            );
 
             return result;
         }
@@ -157,32 +163,39 @@ namespace PrivateECommerce.API.Services
         // ===========================
         // USER – PRODUCT DETAILS
         // ===========================
-        public ProductDetailDto? GetProductById(int productId)
+        public ProductDetailDto GetProductById(int productId)
         {
             var product = _context.Products
-                .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Variants)
                 .Include(p => p.Images)
+
                 .FirstOrDefault(p => p.Id == productId && p.IsActive);
 
             if (product == null) return null;
-
-            var images = product.Images
-                .OrderByDescending(i => i.IsPrimary)
-                .Select(i => i.ImageUrl)
-                .ToList();
 
             return new ProductDetailDto
             {
                 ProductId = product.Id,
                 Name = product.Name,
-                ProductCode = product.ProductCode,
                 CategoryId = product.CategoryId,
+                ProductCode = product.ProductCode,
                 CategoryName = product.Category.Name,
                 Description = product.Description,
-                ImageUrls = images,
-                PrimaryImageUrl = images.FirstOrDefault(),
+
+                ImageUrls = product.Images
+    .OrderByDescending(i => i.IsPrimary)
+    .Select(i => i.ImageUrl)
+    .ToList(),
+
+                PrimaryImageUrl = product.Images
+    .Where(i => i.IsPrimary)
+    .Select(i => i.ImageUrl)
+    .FirstOrDefault(),
+
+
+
+
                 Sizes = product.Variants.Select(v => new ProductVariantDto
                 {
                     VariantId = v.Id,
@@ -198,54 +211,128 @@ namespace PrivateECommerce.API.Services
         // ===========================
         public void CreateProduct(AdminCreateProductDto dto)
         {
-            if (dto.ImageUrls.Count > MAX_IMAGES)
-                throw new ValidationException($"Maximum {MAX_IMAGES} images allowed");
+            using var transaction = _context.Database.BeginTransaction();
 
-            var product = new Product
+            try
             {
-                Name = dto.Name,
-                CategoryId = dto.CategoryId,
-                BrandId = dto.BrandId,
-                Description = dto.Description,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
+                // 1️⃣ Validations
+                if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
+                    throw new ValidationException("Invalid category selected");
 
-            _context.Products.Add(product);
-            _context.SaveChanges();
+                if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
+                    throw new ValidationException("Invalid Brand");
 
-            for (int i = 0; i < dto.ImageUrls.Count; i++)
-            {
-                _context.ProductImages.Add(new ProductImage
+                if (dto.ImageUrls.Count > 5)
+                    throw new ValidationException("Maximum 5 images allowed per product");
+
+                var duplicateSizes = dto.Variants
+                    .GroupBy(v => v.Size.Trim().ToLower())
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
+
+                if (duplicateSizes.Any())
+                    throw new ValidationException(
+                        $"Duplicate sizes not allowed: {string.Join(", ", duplicateSizes)}"
+                    );
+
+                foreach (var v in dto.Variants)
                 {
-                    ProductId = product.Id,
-                    ImageUrl = dto.ImageUrls[i],
-                    IsPrimary = i == 0
-                });
-            }
+                    var sku = v.ProductCode?.Trim();
 
-            _context.SaveChanges();
-            IncrementCacheVersion();
+                    if (string.IsNullOrWhiteSpace(sku))
+                        throw new ValidationException("SKU / ProductCode is required");
+
+                    bool skuExists = _context.ProductVariants.Any(pv =>
+                        pv.ProductCode.ToLower() == sku.ToLower());
+
+                    if (skuExists)
+                        throw new ValidationException($"SKU already exists: {sku}");
+                }
+
+                // 2️⃣ Create Product
+                var product = new Product
+                {
+                    Name = dto.Name,
+                    CategoryId = dto.CategoryId,
+                    BrandId = dto.BrandId,
+                    Description = dto.Description,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Products.Add(product);
+                _context.SaveChanges();
+
+                // 3️⃣ Add Images
+                for (int i = 0; i < dto.ImageUrls.Count; i++)
+                {
+                    _context.ProductImages.Add(new ProductImage
+                    {
+                        ProductId = product.Id,
+                        ImageUrl = dto.ImageUrls[i],
+                        IsPrimary = i == 0
+                    });
+                }
+
+                // 4️⃣ Add Variants
+                foreach (var v in dto.Variants)
+                {
+                    _context.ProductVariants.Add(new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        Size = v.Size,
+                        ProductCode = v.ProductCode,
+                        Price = v.Price,
+                        Stock = v.Stock
+                    });
+                }
+
+                _context.SaveChanges();
+
+                // ✅ 1. Commit DB transaction
+                transaction.Commit();
+
+                // ✅ 2. Invalidate product cache
+                IncrementCacheVersion();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
+
+
+
+
 
         // ===========================
         // ADMIN – UPDATE PRODUCT
         // ===========================
         public void UpdateProduct(int productId, AdminUpdateProductDto dto)
         {
-            if (dto.ImageUrls.Count > MAX_IMAGES)
-                throw new ValidationException($"Maximum {MAX_IMAGES} images allowed");
+            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+            if (product == null)
+                throw new ValidationException("Product not found");
 
-            var product = _context.Products.FirstOrDefault(p => p.Id == productId)
-                ?? throw new ValidationException("Product not found");
+            if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
+                throw new ValidationException("Invalid Brand");
+
+            if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
+                throw new ValidationException("Invalid Category");
 
             product.Name = dto.Name;
             product.CategoryId = dto.CategoryId;
+
             product.BrandId = dto.BrandId;
             product.Description = dto.Description;
-
             _context.ProductImages.RemoveRange(
-                _context.ProductImages.Where(i => i.ProductId == productId));
+    _context.ProductImages.Where(i => i.ProductId == productId)
+);
+
+            if (dto.ImageUrls.Count > 5)
+                throw new ValidationException("Maximum 5 images allowed");
 
             for (int i = 0; i < dto.ImageUrls.Count; i++)
             {
@@ -257,59 +344,208 @@ namespace PrivateECommerce.API.Services
                 });
             }
 
+
             _context.SaveChanges();
             IncrementCacheVersion();
         }
+
 
         // ===========================
         // ADMIN – TOGGLE PRODUCT
         // ===========================
         public void ToggleProduct(int productId)
         {
-            var product = _context.Products.FirstOrDefault(p => p.Id == productId)
-                ?? throw new Exception("Product not found");
+            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+            if (product == null) throw new Exception("Product not found");
 
             product.IsActive = !product.IsActive;
             _context.SaveChanges();
+
             IncrementCacheVersion();
         }
 
         // ===========================
-        // ADMIN – DELETE PRODUCT
+        // ADMIN – DELETE PRODUCT (SOFT)
         // ===========================
         public async Task DeleteProductAsync(int productId)
         {
             var product = await _context.Products
                 .Include(p => p.Variants)
-                .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == productId);
 
             if (product == null)
                 throw new Exception("Product not found");
 
+            // 🔥 HARD DELETE
             _context.ProductVariants.RemoveRange(product.Variants);
-            _context.ProductImages.RemoveRange(product.Images);
             _context.Products.Remove(product);
 
             await _context.SaveChangesAsync();
+        }
+
+
+        // ===========================
+        // ADMIN – UPDATE VARIANT
+        // ===========================
+        public void UpdateProductVariant(int variantId, AdminUpdateProductVariantDto dto)
+        {
+            var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId);
+            if (variant == null)
+                throw new ValidationException("Variant not found");
+
+            // ---------- SIZE VALIDATION ----------
+            var size = dto.Size?.Trim();
+
+            if (string.IsNullOrWhiteSpace(size))
+                throw new ValidationException("Size cannot be empty");
+
+            bool sizeExists = _context.ProductVariants.Any(v =>
+                v.ProductId == variant.ProductId &&
+                v.Size.ToLower() == size.ToLower() &&
+                v.Id != variantId
+            );
+
+            if (sizeExists)
+                throw new ValidationException($"Size '{size}' already exists for this product");
+
+            // ---------- SKU VALIDATION ----------
+            var sku = dto.ProductCode?.Trim();
+
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ValidationException("SKU cannot be empty");
+
+            bool skuExists = _context.ProductVariants.Any(v =>
+                v.ProductCode.ToLower() == sku.ToLower() &&
+                v.Id != variantId
+            );
+
+            if (skuExists)
+                throw new ValidationException($"SKU already exists: {sku}");
+
+            // ---------- UPDATE ----------
+            variant.Size = size;
+            variant.Price = dto.Price;
+            variant.ProductCode = sku;
+            variant.Stock = dto.Stock;
+
+            _context.SaveChanges();
             IncrementCacheVersion();
         }
 
-        // ===========================
-        // ADMIN – VARIANTS
-        // ===========================
+        public void BulkCreate(List<AdminBulkCreateProductDto> products)
+        {
+            using var transaction = _context.Database.BeginTransaction();
+
+            try
+            {
+                foreach (var dto in products)
+                {
+                    var product = new Product
+                    {
+                        Name = dto.Name,
+                        CategoryId = dto.CategoryId,
+                        BrandId = dto.BrandId,
+                        Description = dto.Description,
+                        IsActive = true,                  // ✅ FIX 1
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Products.Add(product);
+                    _context.SaveChanges(); // Needed to get product.Id
+
+                    // ✅ Add product images (set primary)
+                    if (dto.ImageUrls != null && dto.ImageUrls.Any())
+                    {
+                        bool isPrimary = true;
+
+                        foreach (var imageUrl in dto.ImageUrls.Take(5))
+                        {
+                            _context.ProductImages.Add(new ProductImage
+                            {
+                                ProductId = product.Id,
+                                ImageUrl = imageUrl,
+                                IsPrimary = isPrimary       // ✅ FIX 2
+                            });
+
+                            isPrimary = false;
+                        }
+                    }
+
+                    // ✅ Add variants (include stock)
+                    foreach (var v in dto.Variants)
+                    {
+                        _context.ProductVariants.Add(new ProductVariant
+                        {
+                            ProductId = product.Id,
+                            Size = v.Size,
+                            ProductCode = v.ProductCode,
+                            Price = v.Price,
+                                          // ✅ FIX 3
+                        });
+                    }
+                }
+
+                _context.SaveChanges();
+                transaction.Commit();
+
+                IncrementCacheVersion();                  // ✅ FIX 4
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+        }
+
+
+
+
+
+
+
+        public void UpdateVariantStock(int variantId, int stock)
+        {
+            var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId);
+            if (variant == null) throw new Exception("Variant not found");
+
+            variant.Stock = stock;
+            _context.SaveChanges();
+
+            IncrementCacheVersion();
+        }
         public void AddProductVariant(int productId, AdminCreateProductVariantDto dto)
         {
-            if (_context.ProductVariants.Any(v =>
+            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+            if (product == null)
+                throw new ValidationException("Product not found");
+
+            var size = dto.Size?.Trim();
+            if (string.IsNullOrWhiteSpace(size))
+                throw new ValidationException("Size cannot be empty");
+
+            bool sizeExists = _context.ProductVariants.Any(v =>
                 v.ProductId == productId &&
-                v.Size.ToLower() == dto.Size.ToLower()))
-                throw new ValidationException("Size already exists");
+                v.Size.ToLower() == size.ToLower()
+            );
+
+            if (sizeExists)
+                throw new ValidationException($"Size '{size}' already exists");
+
+            var sku = dto.ProductCode?.Trim();
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ValidationException("SKU is required");
+
+            bool skuExists = _context.ProductVariants.Any(v =>
+                v.ProductCode.ToLower() == sku.ToLower());
+
+            if (skuExists)
+                throw new ValidationException($"SKU already exists: {sku}");
 
             _context.ProductVariants.Add(new ProductVariant
             {
                 ProductId = productId,
-                Size = dto.Size,
-                ProductCode = dto.ProductCode,
+                Size = size,
+                ProductCode = sku,
                 Price = dto.Price,
                 Stock = dto.Stock
             });
@@ -318,51 +554,6 @@ namespace PrivateECommerce.API.Services
             IncrementCacheVersion();
         }
 
-        public void UpdateProductVariant(int variantId, AdminUpdateProductVariantDto dto)
-        {
-            var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId)
-                ?? throw new ValidationException("Variant not found");
-
-            variant.Size = dto.Size;
-            variant.Price = dto.Price;
-            variant.ProductCode = dto.ProductCode;
-            variant.Stock = dto.Stock;
-
-            _context.SaveChanges();
-            IncrementCacheVersion();
-        }
-
-        public void UpdateVariantStock(int variantId, int stock)
-        {
-            var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId)
-                ?? throw new Exception("Variant not found");
-
-            variant.Stock = stock;
-            _context.SaveChanges();
-            IncrementCacheVersion();
-        }
-
-        // ===========================
-        // ADMIN – BULK CREATE
-        // ===========================
-        public void BulkCreate(List<AdminBulkCreateProductDto> products)
-        {
-            foreach (var dto in products)
-            {
-                var product = new Product
-                {
-                    Name = dto.Name,
-                    CategoryId = dto.CategoryId,
-                    BrandId = dto.BrandId,
-                    Description = dto.Description
-                };
-
-                _context.Products.Add(product);
-                _context.SaveChanges();
-            }
-
-            IncrementCacheVersion();
-        }
 
         // ===========================
         // ADMIN – LOW STOCK
@@ -378,8 +569,7 @@ namespace PrivateECommerce.API.Services
                     ProductName = v.Product.Name,
                     Size = v.Size,
                     Stock = v.Stock
-                })
-                .ToList();
+                }).ToList();
         }
     }
 }
