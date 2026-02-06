@@ -16,6 +16,8 @@ namespace PrivateECommerce.API.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Cart> Carts { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
+
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Brand> Brands { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
@@ -33,7 +35,14 @@ namespace PrivateECommerce.API.Data
                 .HasForeignKey(ci => ci.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-         
+
+            modelBuilder.Entity<ProductImage>()
+    .HasOne(pi => pi.Product)
+    .WithMany(p => p.Images)
+    .HasForeignKey(pi => pi.ProductId)
+    .OnDelete(DeleteBehavior.Cascade);
+
+
 
             // ================= CART ↔ USER =================
             modelBuilder.Entity<Cart>()

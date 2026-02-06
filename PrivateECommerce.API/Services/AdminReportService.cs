@@ -1,4 +1,5 @@
-﻿using PrivateECommerce.API.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PrivateECommerce.API.Data;
 using PrivateECommerce.API.DTOs.Reports;
 
 public class AdminReportService : IAdminReportService
@@ -51,16 +52,21 @@ public class AdminReportService : IAdminReportService
     public IEnumerable<TopProductDto> GetTopProducts(int top = 5)
     {
         return _context.OrderItems
+            .AsNoTracking()
             .Where(oi => oi.Order.Status == "Delivered")
-            .GroupBy(oi => new
-            {
-                oi.ProductVariant.Product.Name,
-                oi.ProductVariant.Product.ImageUrl   // ✅ ADD
-            })
+            .Include(oi => oi.ProductVariant)
+                .ThenInclude(pv => pv.Product)
+                    .ThenInclude(p => p.Images)
+            .GroupBy(oi => oi.ProductVariant.Product)
             .Select(g => new TopProductDto
             {
                 ProductName = g.Key.Name,
-                ImageUrl = g.Key.ImageUrl,            // ✅ MAP
+
+                ImageUrl = g.Key.Images
+                    .OrderByDescending(i => i.IsPrimary)
+                    .Select(i => i.ImageUrl)
+                    .FirstOrDefault(),
+
                 QuantitySold = g.Sum(x => x.Quantity),
                 Revenue = g.Sum(x => x.Quantity * x.UnitPrice)
             })
@@ -68,6 +74,7 @@ public class AdminReportService : IAdminReportService
             .Take(top)
             .ToList();
     }
+
 
     public IEnumerable<CustomerProductInterestDto> GetCustomerProductInterest(int userId)
     {

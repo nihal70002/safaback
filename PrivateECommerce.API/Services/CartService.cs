@@ -85,25 +85,33 @@ namespace PrivateECommerce.API.Services
             Console.WriteLine("===== ADD TO CART DEBUG END =====");
         }
 
-        // ================= GET CART =================
-        public IEnumerable<CartItemDto> GetCart(int userId)
+        // ================= GET CART =================
+        public IEnumerable<CartItemDto> GetCart(int userId)
         {
             return _context.CartItems
-            .Include(i => i.Cart)
-            .Include(i => i.ProductVariant)
-            .ThenInclude(v => v.Product)
-            .Where(i => i.Cart.UserId == userId)
-            .Select(i => new CartItemDto
-            {
-                ProductVariantId = i.ProductVariantId,
-                ProductName = i.ProductVariant.Product.Name,
-                Size = i.ProductVariant.Size,
-                Quantity = i.Quantity,
-                Price = i.Price,
-                ImageUrl = i.ProductVariant.Product.ImageUrl
-            })
-            .ToList();
+                .AsNoTracking()
+                .Include(i => i.Cart)
+                .Include(i => i.ProductVariant)
+                    .ThenInclude(v => v.Product)
+                        .ThenInclude(p => p.Images)
+                .Where(i => i.Cart.UserId == userId)
+                .Select(i => new CartItemDto
+                {
+                    ProductVariantId = i.ProductVariantId,
+                    ProductName = i.ProductVariant.Product.Name,
+                    Size = i.ProductVariant.Size,
+                    Quantity = i.Quantity,
+                    Price = i.Price,
+
+                    // ✅ Primary product image
+                    ImageUrl = i.ProductVariant.Product.Images
+                        .OrderByDescending(img => img.IsPrimary)
+                        .Select(img => img.ImageUrl)
+                        .FirstOrDefault()
+                })
+                .ToList();
         }
+
         // ================= REMOVE ITEM =================
         public void RemoveItem(int userId, int productVariantId)
         {

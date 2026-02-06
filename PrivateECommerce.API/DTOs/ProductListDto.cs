@@ -11,7 +11,9 @@ public class ProductListDto
     public int BrandId { get; set; }          // ✅ ADD
     public string BrandName { get; set; }     // ✅ ADD
     public string Description { get; set; }
-    public string ImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; }
+    public string PrimaryImageUrl { get; set; }
+
     public bool IsActive { get; set; }
 
     public List<ProductVariantListDto> Variants { get; set; }

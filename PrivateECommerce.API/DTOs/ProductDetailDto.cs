@@ -10,7 +10,9 @@
         public required string CategoryName { get; set; }   // ✅ FIX
 
         public required string Description { get; set; }
-        public required string ImageUrl { get; set; }
+        public List<string> ImageUrls { get; set; } = [];
+        public string PrimaryImageUrl { get; set; }
+
 
         // Initializing the list ensures scannability and prevents null reference errors
         public List<ProductVariantDto> Sizes { get; set; } = [];
