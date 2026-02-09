@@ -122,6 +122,8 @@ namespace PrivateECommerce.API.Services
                     BrandId = p.BrandId,               // ✅ ADD
                     BrandName = p.Brand.BrandName,
 
+                    Description = p.Description,
+
                     PrimaryImageUrl = p.Images
     .Where(i => i.IsPrimary)
     .Select(i => i.ImageUrl)
