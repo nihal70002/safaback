@@ -36,6 +36,9 @@ namespace PrivateECommerce.API.Services
                     Name = p.Name,
                     ProductCode = p.ProductCode,
                     CategoryId = p.CategoryId,
+                    Description = p.Description, // admin products description fix
+
+
                     CategoryName = p.Category.Name,
                     BrandId = p.BrandId,                    // ✅ ADD
                     BrandName = p.Brand.BrandName,
