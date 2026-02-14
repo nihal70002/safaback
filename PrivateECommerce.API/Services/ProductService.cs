@@ -230,16 +230,21 @@ namespace PrivateECommerce.API.Services
                 if (dto.ImageUrls.Count > 5)
                     throw new ValidationException("Maximum 5 images allowed per product");
 
-                var duplicateSizes = dto.Variants
-                    .GroupBy(v => v.Size.Trim().ToLower())
-                    .Where(g => g.Count() > 1)
-                    .Select(g => g.Key)
-                    .ToList();
+                var duplicateCombinations = dto.Variants
+    .GroupBy(v => new
+    {
+        Class = v.Class.Trim().ToLower(),
+        Style = v.Style.Trim().ToLower(),
+        Material = v.Material.Trim().ToLower(),
+        Color = v.Color.Trim().ToLower(),
+        Size = v.Size.Trim().ToLower()
+    })
+    .Where(g => g.Count() > 1)
+    .ToList();
 
-                if (duplicateSizes.Any())
-                    throw new ValidationException(
-                        $"Duplicate sizes not allowed: {string.Join(", ", duplicateSizes)}"
-                    );
+                if (duplicateCombinations.Any())
+                    throw new ValidationException("Duplicate variant combination detected.");
+
 
                 foreach (var v in dto.Variants)
                 {
@@ -400,18 +405,18 @@ namespace PrivateECommerce.API.Services
 
             // ---------- SIZE VALIDATION ----------
             var size = dto.Size?.Trim();
-
-            if (string.IsNullOrWhiteSpace(size))
-                throw new ValidationException("Size cannot be empty");
-
-            bool sizeExists = _context.ProductVariants.Any(v =>
+            bool combinationExists = _context.ProductVariants.Any(v =>
                 v.ProductId == variant.ProductId &&
-                v.Size.ToLower() == size.ToLower() &&
+                v.Class.ToLower() == dto.Class.ToLower() &&
+                v.Style.ToLower() == dto.Style.ToLower() &&
+                v.Material.ToLower() == dto.Material.ToLower() &&
+                v.Color.ToLower() == dto.Color.ToLower() &&
+                v.Size.ToLower() == dto.Size.ToLower() &&
                 v.Id != variantId
             );
 
-            if (sizeExists)
-                throw new ValidationException($"Size '{size}' already exists for this product");
+            if (combinationExists)
+                throw new ValidationException("Variant combination already exists.");
 
             // ---------- SKU VALIDATION ----------
             var sku = dto.ProductCode?.Trim();
@@ -445,20 +450,47 @@ namespace PrivateECommerce.API.Services
             {
                 foreach (var dto in products)
                 {
+                    // ---------- BASIC VALIDATION ----------
+                    if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
+                        throw new ValidationException($"Invalid category for product: {dto.Name}");
+
+                    if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
+                        throw new ValidationException($"Invalid brand for product: {dto.Name}");
+
+                    if (dto.ImageUrls?.Count > 5)
+                        throw new ValidationException($"Maximum 5 images allowed for product: {dto.Name}");
+
+                    // ---------- VARIANT COMBINATION VALIDATION ----------
+                    var duplicateCombinations = dto.Variants
+                        .GroupBy(v => new
+                        {
+                            Class = v.Class.Trim().ToLower(),
+                            Style = v.Style.Trim().ToLower(),
+                            Material = v.Material.Trim().ToLower(),
+                            Color = v.Color.Trim().ToLower(),
+                            Size = v.Size.Trim().ToLower()
+                        })
+                        .Where(g => g.Count() > 1)
+                        .ToList();
+
+                    if (duplicateCombinations.Any())
+                        throw new ValidationException($"Duplicate variant combinations found in product: {dto.Name}");
+
+                    // ---------- CREATE PRODUCT ----------
                     var product = new Product
                     {
                         Name = dto.Name,
                         CategoryId = dto.CategoryId,
                         BrandId = dto.BrandId,
                         Description = dto.Description,
-                        IsActive = true,                  // ✅ FIX 1
+                        IsActive = true,
                         CreatedAt = DateTime.UtcNow
                     };
 
                     _context.Products.Add(product);
-                    _context.SaveChanges(); // Needed to get product.Id
+                    _context.SaveChanges(); // get product.Id
 
-                    // ✅ Add product images (set primary)
+                    // ---------- ADD IMAGES ----------
                     if (dto.ImageUrls != null && dto.ImageUrls.Any())
                     {
                         bool isPrimary = true;
@@ -469,23 +501,38 @@ namespace PrivateECommerce.API.Services
                             {
                                 ProductId = product.Id,
                                 ImageUrl = imageUrl,
-                                IsPrimary = isPrimary       // ✅ FIX 2
+                                IsPrimary = isPrimary
                             });
 
                             isPrimary = false;
                         }
                     }
 
-                    // ✅ Add variants (include stock)
+                    // ---------- ADD VARIANTS ----------
                     foreach (var v in dto.Variants)
                     {
+                        var sku = v.ProductCode?.Trim();
+                        if (string.IsNullOrWhiteSpace(sku))
+                            throw new ValidationException($"SKU is required in product: {dto.Name}");
+
+                        bool skuExists = _context.ProductVariants
+                            .Any(pv => pv.ProductCode.ToLower() == sku.ToLower());
+
+                        if (skuExists)
+                            throw new ValidationException($"Duplicate SKU detected: {sku}");
+
                         _context.ProductVariants.Add(new ProductVariant
                         {
                             ProductId = product.Id,
-                            Size = v.Size,
-                            ProductCode = v.ProductCode,
+                            Class = v.Class.Trim(),
+                            Style = v.Style.Trim(),
+                            Material = v.Material.Trim(),
+                            Color = v.Color.Trim(),
+                            Size = v.Size.Trim(),
+                            ProductCode = sku,
                             Price = v.Price,
-                                          // ✅ FIX 3
+                            
+                            LowStockThreshold = 10
                         });
                     }
                 }
@@ -493,7 +540,7 @@ namespace PrivateECommerce.API.Services
                 _context.SaveChanges();
                 transaction.Commit();
 
-                IncrementCacheVersion();                  // ✅ FIX 4
+                IncrementCacheVersion();
             }
             catch
             {
@@ -510,33 +557,68 @@ namespace PrivateECommerce.API.Services
 
         public void UpdateVariantStock(int variantId, int stock)
         {
-            var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId);
-            if (variant == null) throw new Exception("Variant not found");
+            if (stock < 0)
+                throw new ValidationException("Stock cannot be negative");
+
+            var variant = _context.ProductVariants
+                .FirstOrDefault(v => v.Id == variantId);
+
+            if (variant == null)
+                throw new ValidationException("Variant not found");
 
             variant.Stock = stock;
-            _context.SaveChanges();
 
+            _context.SaveChanges();
             IncrementCacheVersion();
         }
+
         public void AddProductVariant(int productId, AdminCreateProductVariantDto dto)
         {
             var product = _context.Products.FirstOrDefault(p => p.Id == productId);
             if (product == null)
                 throw new ValidationException("Product not found");
 
+            // ---------- REQUIRED FIELD VALIDATION ----------
+            var classValue = dto.Class?.Trim();
+            var style = dto.Style?.Trim();
+            var material = dto.Material?.Trim();
+            var color = dto.Color?.Trim();
             var size = dto.Size?.Trim();
-            if (string.IsNullOrWhiteSpace(size))
-                throw new ValidationException("Size cannot be empty");
 
-            bool sizeExists = _context.ProductVariants.Any(v =>
+            if (string.IsNullOrWhiteSpace(classValue))
+                throw new ValidationException("Class is required");
+
+            if (string.IsNullOrWhiteSpace(style))
+                throw new ValidationException("Style is required");
+
+            if (string.IsNullOrWhiteSpace(material))
+                throw new ValidationException("Material is required");
+
+            if (string.IsNullOrWhiteSpace(color))
+                throw new ValidationException("Color is required");
+
+            if (string.IsNullOrWhiteSpace(size))
+                throw new ValidationException("Size is required");
+
+            if (dto.Stock < 0)
+                throw new ValidationException("Stock cannot be negative");
+
+            // ---------- COMBINATION VALIDATION ----------
+            bool combinationExists = _context.ProductVariants.Any(v =>
                 v.ProductId == productId &&
+                v.Class.ToLower() == classValue.ToLower() &&
+                v.Style.ToLower() == style.ToLower() &&
+                v.Material.ToLower() == material.ToLower() &&
+                v.Color.ToLower() == color.ToLower() &&
                 v.Size.ToLower() == size.ToLower()
             );
 
-            if (sizeExists)
-                throw new ValidationException($"Size '{size}' already exists");
+            if (combinationExists)
+                throw new ValidationException("This variant combination already exists");
 
+            // ---------- SKU VALIDATION ----------
             var sku = dto.ProductCode?.Trim();
+
             if (string.IsNullOrWhiteSpace(sku))
                 throw new ValidationException("SKU is required");
 
@@ -546,9 +628,14 @@ namespace PrivateECommerce.API.Services
             if (skuExists)
                 throw new ValidationException($"SKU already exists: {sku}");
 
+            // ---------- INSERT ----------
             _context.ProductVariants.Add(new ProductVariant
             {
                 ProductId = productId,
+                Class = classValue,
+                Style = style,
+                Material = material,
+                Color = color,
                 Size = size,
                 ProductCode = sku,
                 Price = dto.Price,
