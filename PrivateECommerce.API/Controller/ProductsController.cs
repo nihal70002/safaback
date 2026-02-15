@@ -40,7 +40,24 @@ namespace PrivateECommerce.API.Controllers
             await _productService.DeleteProductAsync(productId);
             return Ok();
         }
-
+        [HttpPut("{productId:int}")]
+        public IActionResult UpdateProduct(int productId, [FromBody] AdminUpdateProductDto dto)
+        {
+            try
+            {
+                _productService.UpdateProduct(productId, dto);
+                return Ok(new { message = "Product updated successfully" });
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // This will help you see the real error in your logs
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
 
         // ===========================

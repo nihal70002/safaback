@@ -337,43 +337,49 @@ namespace PrivateECommerce.API.Services
         // ===========================
         public void UpdateProduct(int productId, AdminUpdateProductDto dto)
         {
-            var product = _context.Products.FirstOrDefault(p => p.Id == productId);
-            if (product == null)
-                throw new ValidationException("Product not found");
-
-            if (!_context.Brands.Any(b => b.BrandId == dto.BrandId))
-                throw new ValidationException("Invalid Brand");
-
-            if (!_context.Categories.Any(c => c.Id == dto.CategoryId))
-                throw new ValidationException("Invalid Category");
-
-            product.Name = dto.Name;
-            product.CategoryId = dto.CategoryId;
-
-            product.BrandId = dto.BrandId;
-            product.Description = dto.Description;
-            _context.ProductImages.RemoveRange(
-    _context.ProductImages.Where(i => i.ProductId == productId)
-);
-
-            if (dto.ImageUrls.Count > 5)
-                throw new ValidationException("Maximum 5 images allowed");
-
-            for (int i = 0; i < dto.ImageUrls.Count; i++)
+            using var transaction = _context.Database.BeginTransaction();
+            try
             {
-                _context.ProductImages.Add(new ProductImage
+                var product = _context.Products.FirstOrDefault(p => p.Id == productId);
+                if (product == null) throw new ValidationException("Product not found");
+
+                // 1. Basic Updates
+                product.Name = dto.Name;
+                product.CategoryId = dto.CategoryId;
+                product.BrandId = dto.BrandId;
+                product.Description = dto.Description;
+
+                // 2. Clear and Replace Images
+                var existingImages = _context.ProductImages.Where(i => i.ProductId == productId);
+                _context.ProductImages.RemoveRange(existingImages);
+
+                if (dto.ImageUrls.Count > 5)
+                    throw new ValidationException("Maximum 5 images allowed");
+
+                for (int i = 0; i < dto.ImageUrls.Count; i++)
                 {
-                    ProductId = productId,
-                    ImageUrl = dto.ImageUrls[i],
-                    IsPrimary = i == 0
-                });
+                    _context.ProductImages.Add(new ProductImage
+                    {
+                        ProductId = productId,
+                        ImageUrl = dto.ImageUrls[i],
+                        IsPrimary = (i == 0)
+                    });
+                }
+
+                // 3. Save DB Changes
+                _context.SaveChanges();
+
+                // 4. Update Cache (If this fails, DB will rollback)
+                IncrementCacheVersion();
+
+                transaction.Commit();
             }
-
-
-            _context.SaveChanges();
-            IncrementCacheVersion();
+            catch (Exception)
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
-
 
         // ===========================
         // ADMIN – TOGGLE PRODUCT
