@@ -24,11 +24,9 @@ namespace PrivateECommerce.API.Services
         {
             return _context.Products
                 .Include(p => p.Category)
-.Include(p => p.Brand)     // ✅ ADD
-.Include(p => p.Variants)
-.Include(p => p.Images)
-
-
+                .Include(p => p.Brand)
+                .Include(p => p.Variants)
+                .Include(p => p.Images)
                 .OrderByDescending(p => p.Id)
                 .Select(p => new ProductListDto
                 {
@@ -36,27 +34,36 @@ namespace PrivateECommerce.API.Services
                     Name = p.Name,
                     ProductCode = p.ProductCode,
                     CategoryId = p.CategoryId,
-                    Description = p.Description, // admin products description fix
-
+                    Description = p.Description,
 
                     CategoryName = p.Category.Name,
-                    BrandId = p.BrandId,                    // ✅ ADD
+                    BrandId = p.BrandId,
                     BrandName = p.Brand.BrandName,
+
                     ImageUrls = p.Images
-    .OrderByDescending(i => i.IsPrimary)
-    .Select(i => i.ImageUrl)
-    .ToList(),
+                        .OrderByDescending(i => i.IsPrimary)
+                        .Select(i => i.ImageUrl)
+                        .ToList(),
 
                     PrimaryImageUrl = p.Images
-    .Where(i => i.IsPrimary)
-    .Select(i => i.ImageUrl)
-    .FirstOrDefault(),
+                        .Where(i => i.IsPrimary)
+                        .Select(i => i.ImageUrl)
+                        .FirstOrDefault(),
 
                     IsActive = p.IsActive,
+
+                    // 🔥 UPDATED VARIANT MAPPING
                     Variants = p.Variants.Select(v => new ProductVariantListDto
                     {
                         VariantId = v.Id,
                         Size = v.Size,
+
+                        // ✅ ADD THESE
+                        Class = v.Class,
+                        Style = v.Style,
+                        Material = v.Material,
+                        Color = v.Color,
+
                         ProductCode = v.ProductCode,
                         Price = v.Price,
                         Stock = v.Stock
@@ -174,7 +181,6 @@ namespace PrivateECommerce.API.Services
                 .Include(p => p.Category)
                 .Include(p => p.Variants)
                 .Include(p => p.Images)
-
                 .FirstOrDefault(p => p.Id == productId && p.IsActive);
 
             if (product == null) return null;
@@ -189,22 +195,26 @@ namespace PrivateECommerce.API.Services
                 Description = product.Description,
 
                 ImageUrls = product.Images
-    .OrderByDescending(i => i.IsPrimary)
-    .Select(i => i.ImageUrl)
-    .ToList(),
+                    .OrderByDescending(i => i.IsPrimary)
+                    .Select(i => i.ImageUrl)
+                    .ToList(),
 
                 PrimaryImageUrl = product.Images
-    .Where(i => i.IsPrimary)
-    .Select(i => i.ImageUrl)
-    .FirstOrDefault(),
+                    .Where(i => i.IsPrimary)
+                    .Select(i => i.ImageUrl)
+                    .FirstOrDefault(),
 
-
-
-
+                // 🔥 UPDATED VARIANT MAPPING
                 Sizes = product.Variants.Select(v => new ProductVariantDto
                 {
                     VariantId = v.Id,
                     Size = v.Size,
+
+                    Class = v.Class,
+                    Style = v.Style,
+                    Material = v.Material,
+                    Color = v.Color,
+
                     Price = v.Price,
                     AvailableStock = v.Stock
                 }).ToList()
