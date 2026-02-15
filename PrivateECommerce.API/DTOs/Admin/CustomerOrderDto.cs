@@ -14,6 +14,7 @@ namespace PrivateECommerce.API.DTOs.Admin
         public string Email { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
 
+
         // ======================
         // SUMMARY
         // ======================

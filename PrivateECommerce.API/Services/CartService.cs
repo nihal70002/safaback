@@ -95,20 +95,26 @@ namespace PrivateECommerce.API.Services
                     .ThenInclude(v => v.Product)
                         .ThenInclude(p => p.Images)
                 .Where(i => i.Cart.UserId == userId)
-                .Select(i => new CartItemDto
-                {
-                    ProductVariantId = i.ProductVariantId,
-                    ProductName = i.ProductVariant.Product.Name,
-                    Size = i.ProductVariant.Size,
-                    Quantity = i.Quantity,
-                    Price = i.Price,
+               .Select(c => new CartItemDto
+               {
+                   ProductVariantId = c.ProductVariantId,
+                   ProductName = c.ProductVariant.Product.Name,
+                   Size = c.ProductVariant.Size,
 
-                    // ✅ Primary product image
-                    ImageUrl = i.ProductVariant.Product.Images
-                        .OrderByDescending(img => img.IsPrimary)
-                        .Select(img => img.ImageUrl)
-                        .FirstOrDefault()
-                })
+                   // ✅ ADD THESE
+                   Class = c.ProductVariant.Class,
+                   Style = c.ProductVariant.Style,
+                   Material = c.ProductVariant.Material,
+                   Color = c.ProductVariant.Color,
+
+                   Price = c.ProductVariant.Price,
+                   Quantity = c.Quantity,
+                   ImageUrl = c.ProductVariant.Product.Images
+        .Where(i => i.IsPrimary)
+        .Select(i => i.ImageUrl)
+        .FirstOrDefault()
+               })
+
                 .ToList();
         }
 

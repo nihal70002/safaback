@@ -7,4 +7,11 @@
     public decimal UnitPrice { get; set; }
     public string ProductImage { get; set; }
     public decimal Subtotal { get; set; }
+
+    public string? Size { get; set; }
+    public string? Class { get; set; }
+    public string? Style { get; set; }
+    public string? Material { get; set; }
+    public string? Color { get; set; }
+
 }
