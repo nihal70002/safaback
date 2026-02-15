@@ -301,12 +301,17 @@ namespace PrivateECommerce.API.Services
                     _context.ProductVariants.Add(new ProductVariant
                     {
                         ProductId = product.Id,
-                        Size = v.Size,
-                        ProductCode = v.ProductCode,
+                        Class = v.Class?.Trim(),
+                        Style = v.Style?.Trim(),
+                        Material = v.Material?.Trim(),
+                        Color = v.Color?.Trim(),
+                        Size = v.Size?.Trim(),
+                        ProductCode = v.ProductCode?.Trim(),
                         Price = v.Price,
                         Stock = v.Stock
                     });
                 }
+
 
                 _context.SaveChanges();
 
@@ -417,7 +422,8 @@ namespace PrivateECommerce.API.Services
             var size = dto.Size?.Trim();
             bool combinationExists = _context.ProductVariants.Any(v =>
                 v.ProductId == variant.ProductId &&
-                v.Class.ToLower() == dto.Class.ToLower() &&
+                (v.Class ?? "").ToLower()
+ == dto.Class.ToLower() &&
                 v.Style.ToLower() == dto.Style.ToLower() &&
                 v.Material.ToLower() == dto.Material.ToLower() &&
                 v.Color.ToLower() == dto.Color.ToLower() &&
