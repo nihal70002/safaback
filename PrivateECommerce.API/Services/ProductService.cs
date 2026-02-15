@@ -414,20 +414,35 @@ namespace PrivateECommerce.API.Services
         // ===========================
         public void UpdateProductVariant(int variantId, AdminUpdateProductVariantDto dto)
         {
-            var variant = _context.ProductVariants.FirstOrDefault(v => v.Id == variantId);
+            var variant = _context.ProductVariants
+                .FirstOrDefault(v => v.Id == variantId);
+
             if (variant == null)
                 throw new ValidationException("Variant not found");
 
-            // ---------- SIZE VALIDATION ----------
+            // ---------- CLEAN VALUES ----------
+            var classValue = dto.Class?.Trim();
+            var style = dto.Style?.Trim();
+            var material = dto.Material?.Trim();
+            var color = dto.Color?.Trim();
             var size = dto.Size?.Trim();
+            var sku = dto.ProductCode?.Trim();
+
+            // ---------- REQUIRED FIELDS ----------
+            if (string.IsNullOrWhiteSpace(size))
+                throw new ValidationException("Size is required");
+
+            if (string.IsNullOrWhiteSpace(sku))
+                throw new ValidationException("SKU cannot be empty");
+
+            // ---------- COMBINATION VALIDATION ----------
             bool combinationExists = _context.ProductVariants.Any(v =>
                 v.ProductId == variant.ProductId &&
-                (v.Class ?? "").ToLower()
- == dto.Class.ToLower() &&
-                v.Style.ToLower() == dto.Style.ToLower() &&
-                v.Material.ToLower() == dto.Material.ToLower() &&
-                v.Color.ToLower() == dto.Color.ToLower() &&
-                v.Size.ToLower() == dto.Size.ToLower() &&
+                (v.Class ?? "").ToLower() == (classValue ?? "").ToLower() &&
+                (v.Style ?? "").ToLower() == (style ?? "").ToLower() &&
+                (v.Material ?? "").ToLower() == (material ?? "").ToLower() &&
+                (v.Color ?? "").ToLower() == (color ?? "").ToLower() &&
+                (v.Size ?? "").ToLower() == size.ToLower() &&
                 v.Id != variantId
             );
 
@@ -435,13 +450,8 @@ namespace PrivateECommerce.API.Services
                 throw new ValidationException("Variant combination already exists.");
 
             // ---------- SKU VALIDATION ----------
-            var sku = dto.ProductCode?.Trim();
-
-            if (string.IsNullOrWhiteSpace(sku))
-                throw new ValidationException("SKU cannot be empty");
-
             bool skuExists = _context.ProductVariants.Any(v =>
-                v.ProductCode.ToLower() == sku.ToLower() &&
+                (v.ProductCode ?? "").ToLower() == sku.ToLower() &&
                 v.Id != variantId
             );
 
@@ -449,6 +459,10 @@ namespace PrivateECommerce.API.Services
                 throw new ValidationException($"SKU already exists: {sku}");
 
             // ---------- UPDATE ----------
+            variant.Class = classValue;
+            variant.Style = style;
+            variant.Material = material;
+            variant.Color = color;
             variant.Size = size;
             variant.Price = dto.Price;
             variant.ProductCode = sku;
