@@ -9,10 +9,11 @@ namespace PrivateECommerce.API.Models
 
         [Column("ProductId")] // ✅ MATCH DB EXACTLY
         public int ProductId { get; set; }
-        public string Class { get; set; } = null!;      // 1 / 2 / 3
-        public string Style { get; set; } = null!;      // AD / AF / AG
-        public string Material { get; set; } = null!;   // Classic / Cotton
-        public string Color { get; set; } = null!;
+        public string? Class { get; set; }
+        public string? Style { get; set; }
+        public string? Material { get; set; }
+        public string? Color { get; set; }
+
         public Product Product { get; set; } = null!;
         public int LowStockThreshold { get; set; } = 10;
         public string? ProductCode { get; set; } 
