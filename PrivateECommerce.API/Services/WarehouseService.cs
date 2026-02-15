@@ -121,6 +121,8 @@ namespace PrivateECommerce.API.Services
                         // 🔥 ADD THESE
                         Class = i.ProductVariant.Class,
                         Style = i.ProductVariant.Style,
+                        UnitPrice = i.UnitPrice,
+
                         Material = i.ProductVariant.Material,
                         Color = i.ProductVariant.Color
                     }).ToList(),
