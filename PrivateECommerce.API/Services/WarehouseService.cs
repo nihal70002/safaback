@@ -116,8 +116,15 @@ namespace PrivateECommerce.API.Services
                         ProductName = i.ProductVariant.Product.Name,
                         VariantSize = i.ProductVariant.Size,
                         ProductCode = i.ProductVariant.ProductCode,
-                        Quantity = i.Quantity
+                        Quantity = i.Quantity,
+
+                        // 🔥 ADD THESE
+                        Class = i.ProductVariant.Class,
+                        Style = i.ProductVariant.Style,
+                        Material = i.ProductVariant.Material,
+                        Color = i.ProductVariant.Color
                     }).ToList(),
+
 
                     TotalQuantity = o.OrderItems.Sum(i => i.Quantity)
                 })
