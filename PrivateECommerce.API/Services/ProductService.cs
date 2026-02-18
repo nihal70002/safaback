@@ -621,17 +621,7 @@ namespace PrivateECommerce.API.Services
             var color = dto.Color?.Trim();
             var size = dto.Size?.Trim();
 
-            if (string.IsNullOrWhiteSpace(classValue))
-                throw new ValidationException("Class is required");
-
-            if (string.IsNullOrWhiteSpace(style))
-                throw new ValidationException("Style is required");
-
-            if (string.IsNullOrWhiteSpace(material))
-                throw new ValidationException("Material is required");
-
-            if (string.IsNullOrWhiteSpace(color))
-                throw new ValidationException("Color is required");
+            
 
             if (string.IsNullOrWhiteSpace(size))
                 throw new ValidationException("Size is required");
