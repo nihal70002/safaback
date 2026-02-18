@@ -82,12 +82,21 @@ namespace PrivateECommerce.API.Controllers
 
 
         [HttpPost("{productId}/variant")]
-        public IActionResult AddVariant(
-    int productId,
-    AdminCreateProductVariantDto dto)
+        public IActionResult AddVariant(int productId, AdminCreateProductVariantDto dto)
         {
-            _productService.AddProductVariant(productId, dto);
-            return Ok("Variant added");
+            try
+            {
+                _productService.AddProductVariant(productId, dto);
+                return Ok("Variant added");
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
 
