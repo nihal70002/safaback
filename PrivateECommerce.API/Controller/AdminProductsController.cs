@@ -53,12 +53,34 @@ namespace PrivateECommerce.API.Controllers
             _productService.UpdateProduct(productId, dto);
             return Ok("Product updated successfully");
         }
+
+
         [HttpPut("variant/{variantId}")]
         public IActionResult UpdateVariant(int variantId, AdminUpdateProductVariantDto dto)
         {
-            _productService.UpdateProductVariant(variantId, dto);
-            return Ok("Variant updated successfully");
+            try
+            {
+                _productService.UpdateProductVariant(variantId, dto);
+                return Ok("Variant updated successfully");
+            }
+            catch (ValidationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
+
+
+
+
+
+
+
+
+
         [HttpPost("{productId}/variant")]
         public IActionResult AddVariant(
     int productId,
