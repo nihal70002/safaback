@@ -29,16 +29,16 @@ namespace PrivateECommerce.API.Controllers
 
         [HttpGet]
         public IActionResult GetAll(
-      [FromQuery] int page = 1,
-      [FromQuery] int pageSize = 12,
-      [FromQuery] int? categoryId = null,
-      [FromQuery] int? brandId = null,
-      [FromQuery] string? search = null)
+    [FromQuery] int page = 1,
+    [FromQuery] int pageSize = 12,
+    [FromQuery] List<int>? categoryIds = null,
+    [FromQuery] int? brandId = null,
+    [FromQuery] string? search = null)
         {
             var result = _productService.GetProducts(
                 page,
                 pageSize,
-                categoryId,
+                categoryIds,
                 brandId,
                 search);
 
@@ -52,7 +52,6 @@ namespace PrivateECommerce.API.Controllers
 
 
 
-      
         [HttpDelete("{productId}")]
         public async Task<IActionResult> DeleteProduct(int productId)
         {

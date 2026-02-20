@@ -21,8 +21,9 @@ namespace PrivateECommerce.API.Services
         PagedResponseDto<ProductListDto> GetProducts(
     int page,
     int pageSize,
-    int? categoryId,
+    List<int>? categoryIds,
     int? brandId,
     string? search);
     }
+
 }

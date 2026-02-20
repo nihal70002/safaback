@@ -93,20 +93,26 @@ namespace PrivateECommerce.API.Services
             _cache.SetString(ProductCacheVersionKey, version.ToString());
         }
 
-        // ===========================
-        // USER – LIST PRODUCTS (PAGED)
-        // ===========================
+
+
+
+
         public PagedResponseDto<ProductListDto> GetProducts(
-     int page,
-     int pageSize,
-     int? categoryId,
-     int? brandId,
-     string? search)
+    int page,
+    int pageSize,
+    List<int>? categoryIds,
+    int? brandId,
+    string? search)
         {
             int version = GetCacheVersion();
 
+            // 🔥 SAFE CATEGORY CACHE KEY
+            var categoryKey = categoryIds != null && categoryIds.Any()
+                ? string.Join("-", categoryIds.OrderBy(x => x))
+                : "none";
+
             string cacheKey =
-                $"products_v{version}_page_{page}_{pageSize}_cat_{categoryId}_brand_{brandId}_search_{search}";
+                $"products_v{version}_page_{page}_{pageSize}_cats_{categoryKey}_brand_{brandId}_search_{search}";
 
             var cachedData = _cache.GetString(cacheKey);
             if (cachedData != null)
@@ -120,9 +126,11 @@ namespace PrivateECommerce.API.Services
             var query = _context.Products
                 .Where(p => p.IsActive);
 
-            // 🔥 APPLY FILTERS
-            if (categoryId.HasValue)
-                query = query.Where(p => p.CategoryId == categoryId.Value);
+            // 🔥 MULTI CATEGORY FILTER
+            if (categoryIds != null && categoryIds.Any())
+            {
+                query = query.Where(p => categoryIds.Contains(p.CategoryId));
+            }
 
             if (brandId.HasValue)
                 query = query.Where(p => p.BrandId == brandId.Value);
@@ -130,7 +138,6 @@ namespace PrivateECommerce.API.Services
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(p => p.Name.Contains(search));
 
-            // 🔥 INCLUDE AFTER FILTER
             query = query
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -183,12 +190,12 @@ namespace PrivateECommerce.API.Services
                 new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
-                }
-            );
+                });
 
             return result;
         }
-        // ===========================
+
+
         // USER – PRODUCT DETAILS
         // ===========================
         public ProductDetailDto GetProductById(int productId)
