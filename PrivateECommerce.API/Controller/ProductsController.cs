@@ -26,14 +26,33 @@ namespace PrivateECommerce.API.Controllers
         // LIST PRODUCTS (USER) - PAGINATED
         // GET: api/products?page=1&pageSize=12
         // ===========================
+
         [HttpGet]
         public IActionResult GetAll(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 12)
+      [FromQuery] int page = 1,
+      [FromQuery] int pageSize = 12,
+      [FromQuery] int? categoryId = null,
+      [FromQuery] int? brandId = null,
+      [FromQuery] string? search = null)
         {
-            var result = _productService.GetProducts(page, pageSize);
+            var result = _productService.GetProducts(
+                page,
+                pageSize,
+                categoryId,
+                brandId,
+                search);
+
             return Ok(result);
         }
+
+
+
+
+
+
+
+
+      
         [HttpDelete("{productId}")]
         public async Task<IActionResult> DeleteProduct(int productId)
         {

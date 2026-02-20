@@ -18,6 +18,11 @@ namespace PrivateECommerce.API.Services
         Task DeleteProductAsync(int productId);
 
         IEnumerable<LowStockVariantDto> GetLowStockVariants(int threshold);
-        PagedResponseDto<ProductListDto> GetProducts(int page, int pageSize);
+        PagedResponseDto<ProductListDto> GetProducts(
+    int page,
+    int pageSize,
+    int? categoryId,
+    int? brandId,
+    string? search);
     }
 }

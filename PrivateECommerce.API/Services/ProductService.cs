@@ -96,10 +96,17 @@ namespace PrivateECommerce.API.Services
         // ===========================
         // USER – LIST PRODUCTS (PAGED)
         // ===========================
-        public PagedResponseDto<ProductListDto> GetProducts(int page, int pageSize)
+        public PagedResponseDto<ProductListDto> GetProducts(
+     int page,
+     int pageSize,
+     int? categoryId,
+     int? brandId,
+     string? search)
         {
             int version = GetCacheVersion();
-            string cacheKey = $"products_v{version}_page_{page}_{pageSize}";
+
+            string cacheKey =
+                $"products_v{version}_page_{page}_{pageSize}_cat_{categoryId}_brand_{brandId}_search_{search}";
 
             var cachedData = _cache.GetString(cacheKey);
             if (cachedData != null)
@@ -111,7 +118,20 @@ namespace PrivateECommerce.API.Services
             Console.WriteLine("PRODUCTS → DB HIT");
 
             var query = _context.Products
-                .Where(p => p.IsActive)
+                .Where(p => p.IsActive);
+
+            // 🔥 APPLY FILTERS
+            if (categoryId.HasValue)
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+
+            if (brandId.HasValue)
+                query = query.Where(p => p.BrandId == brandId.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.Name.Contains(search));
+
+            // 🔥 INCLUDE AFTER FILTER
+            query = query
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Variants)
@@ -129,17 +149,14 @@ namespace PrivateECommerce.API.Services
                     Name = p.Name,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
-                    BrandId = p.BrandId,               // ✅ ADD
+                    BrandId = p.BrandId,
                     BrandName = p.Brand.BrandName,
-
                     Description = p.Description,
 
                     PrimaryImageUrl = p.Images
-    .Where(i => i.IsPrimary)
-    .Select(i => i.ImageUrl)
-    .FirstOrDefault(),
-
-
+                        .Where(i => i.IsPrimary)
+                        .Select(i => i.ImageUrl)
+                        .FirstOrDefault(),
 
                     Variants = p.Variants.Select(v => new ProductVariantListDto
                     {
@@ -171,7 +188,6 @@ namespace PrivateECommerce.API.Services
 
             return result;
         }
-
         // ===========================
         // USER – PRODUCT DETAILS
         // ===========================
