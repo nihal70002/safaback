@@ -28,16 +28,11 @@ namespace ClientEcommerce.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // ================= CART =================
             modelBuilder.Entity<Cart>()
                 .HasMany(c => c.Items)
                 .WithOne(ci => ci.Cart)
                 .HasForeignKey(ci => ci.CartId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<ProductImage>()
-                .HasOne(pi => pi.Product)
-                .WithMany(p => p.Images)
-                .HasForeignKey(pi => pi.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Cart>()
@@ -52,6 +47,25 @@ namespace ClientEcommerce.API.Data
                 .HasForeignKey(ci => ci.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // ================= PRODUCT =================
+            modelBuilder.Entity<ProductImage>()
+                .HasOne(pi => pi.Product)
+                .WithMany(p => p.Images)
+                .HasForeignKey(pi => pi.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductVariant>()
+                .HasOne(v => v.Product)
+                .WithMany(p => p.Variants)
+                .HasForeignKey(v => v.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // SKU UNIQUE INDEX (Very Important)
+            modelBuilder.Entity<ProductVariant>()
+                .HasIndex(v => v.ProductCode)
+                .IsUnique();
+
+            // ================= USER =================
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
@@ -60,6 +74,18 @@ namespace ClientEcommerce.API.Data
                 .HasIndex(u => u.PhoneNumber)
                 .IsUnique();
 
+            // ================= CATEGORY =================
+            modelBuilder.Entity<Category>()
+                .HasOne(c => c.ParentCategory)
+                .WithMany(c => c.SubCategories)
+                .HasForeignKey(c => c.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔥 IMPORTANT: Add index for faster subcategory lookup
+            modelBuilder.Entity<Category>()
+                .HasIndex(c => c.ParentCategoryId);
+
+            // ================= ORDER =================
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.OrdersPlaced)
@@ -68,17 +94,7 @@ namespace ClientEcommerce.API.Data
 
             modelBuilder.Entity<Order>()
                 .HasIndex(o => o.Status);
-
-            modelBuilder.Entity<ProductVariant>()
-                .HasOne(v => v.Product)
-                .WithMany(p => p.Variants)
-                .HasForeignKey(v => v.ProductId);
-
-            modelBuilder.Entity<ProductVariant>()
-                .HasIndex(v => v.ProductCode)
-                .IsUnique();
         }
-
 
     }
 

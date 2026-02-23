@@ -4,7 +4,9 @@ namespace ClientEcommerce.API.DTOs
 {
     public class CreateCategoryDto
     {
-        [Required]
-        public required string Name { get; set; }
+        public string Name { get; set; }
+        public int? ParentCategoryId { get; set; }
+
+        public IFormFile? Image { get; set; }   // 🔥 ADD THIS
     }
 }
