@@ -124,7 +124,8 @@ namespace PrivateECommerce.API.Services
             Console.WriteLine("PRODUCTS → DB HIT");
 
             var query = _context.Products
-                .Where(p => p.IsActive);
+    .Include(p => p.Brand)   // move include BEFORE filtering
+    .Where(p => p.IsActive);
 
             // 🔥 MULTI CATEGORY FILTER
             if (categoryIds != null && categoryIds.Any())
@@ -136,7 +137,15 @@ namespace PrivateECommerce.API.Services
                 query = query.Where(p => p.BrandId == brandId.Value);
 
             if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(p => p.Name.Contains(search));
+            {
+                search = search.Trim();
+
+                query = query.Where(p =>
+                    EF.Functions.ILike(p.Name, $"%{search}%") ||
+                    EF.Functions.ILike(p.Description, $"%{search}%") ||
+                    EF.Functions.ILike(p.Brand.BrandName, $"%{search}%")
+                );
+            }
 
             query = query
                 .Include(p => p.Category)
@@ -193,6 +202,39 @@ namespace PrivateECommerce.API.Services
                 });
 
             return result;
+        }
+
+
+        public List<ProductSearchSuggestionDto> SearchSuggestions(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return new List<ProductSearchSuggestionDto>();
+
+            query = query.Trim();
+
+            return _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.Images)
+                .Include(p => p.Variants)
+                .Where(p => p.IsActive &&
+                    EF.Functions.ILike(p.Name, $"%{query}%"))
+                .OrderByDescending(p => p.Id)
+                .Take(5)
+                .Select(p => new ProductSearchSuggestionDto
+                {
+                    ProductId = p.Id,
+                    Name = p.Name,
+                    BrandName = p.Brand.BrandName,
+                    PrimaryImageUrl = p.Images
+                        .Where(i => i.IsPrimary)
+                        .Select(i => i.ImageUrl)
+                        .FirstOrDefault(),
+                    StartingPrice = p.Variants
+                        .OrderBy(v => v.Price)
+                        .Select(v => v.Price)
+                        .FirstOrDefault()
+                })
+                .ToList();
         }
 
 

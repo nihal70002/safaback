@@ -13,7 +13,7 @@ namespace PrivateECommerce.API.Services
         void UpdateVariantStock(int variantId, int stock);
         void ToggleProduct(int productId);
         void AddProductVariant(int productId, AdminCreateProductVariantDto dto);
-
+        List<ProductSearchSuggestionDto> SearchSuggestions(string query);
 
         Task DeleteProductAsync(int productId);
 

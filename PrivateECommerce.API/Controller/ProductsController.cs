@@ -76,6 +76,12 @@ namespace PrivateECommerce.API.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+        [HttpGet("search-suggestions")]
+        public IActionResult SearchSuggestions([FromQuery] string query)
+        {
+            var results = _productService.SearchSuggestions(query);
+            return Ok(results);
+        }
 
 
         // ===========================
