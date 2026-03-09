@@ -22,22 +22,23 @@ namespace PrivateECommerce.API.Controllers
         // CUSTOMER: PLACE ORDER
         // ==========================
         [HttpPost]
-        public IActionResult PlaceOrder(PlaceOrderByCustomerDto dto)
+        public async Task<IActionResult> PlaceOrder(PlaceOrderByCustomerDto dto)
         {
             try
             {
-                int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)); // Or your way of getting ID
-                _orderService.PlaceOrder(userId, dto);
+                int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                await _orderService.PlaceOrder(userId, dto);
+
                 return Ok("Order placed successfully");
             }
             catch (InvalidOperationException ex)
             {
-                // This sends a clean message back to Swagger immediately
                 return BadRequest(ex.Message);
             }
         }
 
-        
+
         [HttpGet("my/{orderId}")]
         public async Task<IActionResult> GetMyOrderDetails(int orderId)
         {

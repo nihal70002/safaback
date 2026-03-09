@@ -9,7 +9,7 @@ namespace PrivateECommerce.API.Services
         // ===========================
         // CUSTOMER
         // ===========================
-        void PlaceOrder(int customerId, PlaceOrderByCustomerDto dto);
+        Task PlaceOrder(int customerId, PlaceOrderByCustomerDto dto);
         IEnumerable<UserOrderListDto> GetOrdersForUser(int userId);
         UserOrderDetailDto GetOrderForUser(int orderId, int userId);
 
