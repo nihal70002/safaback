@@ -88,17 +88,28 @@ namespace PrivateECommerce.API.Controllers
         // ==========================
         // SALES EXECUTIVE: APPROVE ORDER
         // ==========================
-        [HttpPost("sales/{orderId}/approve")]
-        [Authorize(Roles = "SalesExecutive")]
-        public IActionResult ApproveOrderBySales(int orderId)
+       
+[HttpPost("sales/{orderId}/approve")]
+[Authorize(Roles = "SalesExecutive")]
+public async Task<IActionResult> ApproveOrderBySales(int orderId)
         {
-            int salesId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
+            try
+            {
+                int salesId = int.Parse(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!
+                );
 
-            _orderService.ApproveBySales(orderId, salesId);
-            return Ok(new { message = "Order approved successfully" });
+                await _orderService.ApproveBySales(orderId, salesId);
+
+                return Ok(new { message = "Order approved successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
+
+
 
         // ==========================
         // SALES EXECUTIVE: REJECT ORDER

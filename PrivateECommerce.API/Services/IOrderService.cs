@@ -19,7 +19,7 @@ namespace PrivateECommerce.API.Services
         CustomerOrderDto GetCustomerOrderHistory(int salesExecutiveId, int customerId);
         List<SalesOrderListDto> GetPendingOrdersForSales(int salesExecutiveId);
         List<SalesOrderListDto> GetOrdersForSalesExecutive(int salesExecutiveId);
-       void ApproveBySales(int orderId, int approverUserId, bool isAdmin = false);
+        Task ApproveBySales(int orderId, int approverUserId, bool isAdmin = false);
 
         void RejectBySales(int orderId, int salesId);
 
