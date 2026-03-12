@@ -7,7 +7,7 @@
         public required string Status { get; set; } // Fixed
         public decimal TotalAmount { get; set; }
 
-        public List<UserOrderItemDto> Items { get; set; } = []; // Initialized empty list
+        public List<UserOrderItemDto> Items { get; set; } = new(); // Initialized empty list
     }
 
     public class UserOrderItemDto

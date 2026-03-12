@@ -19,7 +19,7 @@
     public class UserDetailsDto : UserSummaryDto
     {
         public DateTime JoinDate { get; set; }
-        public List<OrderHistoryDto> OrderHistory { get; set; } = [];
+        public List<OrderHistoryDto> OrderHistory { get; set; } = new();
     }
 
     public class OrderHistoryDto

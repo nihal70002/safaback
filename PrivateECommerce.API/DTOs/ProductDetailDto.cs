@@ -10,11 +10,11 @@
         public required string CategoryName { get; set; }   // ✅ FIX
 
         public required string Description { get; set; }
-        public List<string> ImageUrls { get; set; } = [];
+        public List<string> ImageUrls { get; set; } = new();
         public string PrimaryImageUrl { get; set; }
 
 
         // Initializing the list ensures scannability and prevents null reference errors
-        public List<ProductVariantDto> Sizes { get; set; } = [];
+        public List<ProductVariantDto> Sizes { get; set; } = new();
     }
 }

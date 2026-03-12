@@ -12,7 +12,7 @@ namespace PrivateECommerce.API.Models
         public Category Category { get; set; } = null!;
 
         public required string Description { get; set; }
-        public ICollection<ProductImage> Images { get; set; } = [];
+        public ICollection<ProductImage> Images { get; set; } = new List<ProductImage>();
 
 
         public bool IsActive { get; set; } = true;
@@ -20,6 +20,6 @@ namespace PrivateECommerce.API.Models
         public Brand Brand { get; set; } = null!;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public ICollection<ProductVariant> Variants { get; set; } = [];
+        public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
     }
 }

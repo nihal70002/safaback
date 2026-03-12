@@ -6,7 +6,7 @@
         public int CategoryId { get; set; }
         public int BrandId { get; set; }
         public string? Description { get; set; }
-        public List<string> ImageUrls { get; set; } = [];
+        public List<string> ImageUrls { get; set; } = new();
 
         // IMPORTANT: initialized
         public List<AdminCreateVariantDto> Variants { get; set; } = new();
