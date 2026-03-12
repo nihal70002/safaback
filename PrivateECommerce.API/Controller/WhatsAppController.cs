@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using PrivateECommerce.API.Services;
 
 namespace PrivateECommerce.API.Controllers
@@ -16,14 +17,12 @@ namespace PrivateECommerce.API.Controllers
 
         [HttpPost("webhook")]
         [Consumes("application/x-www-form-urlencoded")]
-        public IActionResult ReceiveMessage([FromForm] string Body, [FromForm] string From)
+        public async Task<IActionResult> ReceiveMessage([FromForm] string Body, [FromForm] string From)
         {
             Console.WriteLine("🔥 WHATSAPP WEBHOOK HIT");
 
-            if (string.IsNullOrEmpty(Body))
-            {
+            if (string.IsNullOrWhiteSpace(Body))
                 return Content("<Response></Response>", "text/xml");
-            }
 
             var message = Body.Trim().ToUpper();
             var sender = From.Replace("whatsapp:", "");
@@ -31,55 +30,64 @@ namespace PrivateECommerce.API.Controllers
             Console.WriteLine($"📩 WhatsApp message received: {message}");
             Console.WriteLine($"📱 From: {sender}");
 
-            // Run processing in background so Twilio doesn't timeout
-            _ = Task.Run(async () =>
+            try
             {
-                try
+                if (!message.Contains("-"))
                 {
-                    if (!message.Contains("-"))
-                    {
-                        await _orderService.SendWhatsapp(sender,
-                            "❌ Invalid format. Use APPROVE-ID or REJECT-ID");
-                        return;
-                    }
+                    await _orderService.SendWhatsapp(
+                        sender,
+                        "❌ Invalid format. Use APPROVE-ID or REJECT-ID"
+                    );
 
-                    var parts = message.Split("-");
-                    if (parts.Length != 2) return;
-
-                    var command = parts[0].Trim();
-                    if (!int.TryParse(parts[1].Trim(), out int orderId)) return;
-
-                    if (command == "ACCEPT" || command == "APPROVE")
-                    {
-                        await _orderService.ApproveBySales(orderId, 0);
-
-                        Console.WriteLine($"✅ Order {orderId} approved via WhatsApp");
-
-                        await _orderService.SendWhatsapp(
-                            sender,
-                            $"✅ Order #{orderId} has been approved successfully."
-                        );
-                    }
-                    else if (command == "REJECT")
-                    {
-                        _orderService.RejectBySales(orderId, 0);
-
-                        Console.WriteLine($"❌ Order {orderId} rejected via WhatsApp");
-
-                        await _orderService.SendWhatsapp(
-                            sender,
-                            $"❌ Order #{orderId} has been rejected."
-                        );
-                    }
+                    return Content("<Response></Response>", "text/xml");
                 }
-                catch (Exception ex)
+
+                var parts = message.Split("-");
+                if (parts.Length != 2)
+                    return Content("<Response></Response>", "text/xml");
+
+                var command = parts[0].Trim();
+
+                if (!int.TryParse(parts[1].Trim(), out int orderId))
+                    return Content("<Response></Response>", "text/xml");
+
+                if (command == "APPROVE" || command == "ACCEPT")
                 {
-                    Console.WriteLine($"⚠ Webhook error: {ex.Message}");
-                }
-            });
+                    await _orderService.ApproveBySales(orderId, 0);
 
-            // Respond immediately to Twilio
+                    Console.WriteLine($"✅ Order {orderId} approved via WhatsApp");
+
+                    await _orderService.SendWhatsapp(
+                        sender,
+                        $"✅ Order #{orderId} has been approved successfully."
+                    );
+                }
+                else if (command == "REJECT")
+                {
+                    await _orderService.RejectBySales(orderId, 0);
+
+                    Console.WriteLine($"❌ Order {orderId} rejected via WhatsApp");
+
+                    await _orderService.SendWhatsapp(
+                        sender,
+                        $"❌ Order #{orderId} has been rejected."
+                    );
+                }
+                else
+                {
+                    await _orderService.SendWhatsapp(
+                        sender,
+                        "❌ Unknown command. Use APPROVE-ID or REJECT-ID"
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠ Webhook error: {ex}");
+            }
+
             return Content("<Response></Response>", "text/xml");
         }
     }
 }
+
