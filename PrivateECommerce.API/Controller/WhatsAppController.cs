@@ -15,52 +15,56 @@ namespace PrivateECommerce.API.Controllers
         }
 
         [HttpPost("webhook")]
-        public async Task<IActionResult> ReceiveMessage()
+        [Consumes("application/x-www-form-urlencoded")] // Explicitly tell ASP.NET to expect Form data
+        public async Task<IActionResult> ReceiveMessage([FromForm] string Body, [FromForm] string From)
         {
             Console.WriteLine("🔥 WHATSAPP WEBHOOK HIT");
 
-            var form = Request.Form;
+            if (string.IsNullOrEmpty(Body))
+            {
+                return Ok(); // Twilio needs a 200 OK even if body is empty
+            }
 
-            var message = form["Body"].ToString().Trim().ToUpper();
-            var from = form["From"].ToString();
-
+            var message = Body.Trim().ToUpper();
             Console.WriteLine($"📩 WhatsApp message received: {message}");
-            Console.WriteLine($"📱 From: {from}");
+            Console.WriteLine($"📱 From: {From}");
 
             try
             {
+                // Logic: Expecting "COMMAND-ID" (e.g., APPROVE-101)
                 if (!message.Contains("-"))
-                    return Content("<Response></Response>", "text/xml");
+                {
+                    return Content("<Response><Message>Invalid format. Use APPROVE-ID or REJECT-ID</Message></Response>", "text/xml");
+                }
 
                 var parts = message.Split("-");
+                if (parts.Length != 2) return Ok();
 
-                if (parts.Length != 2)
-                    return Content("<Response></Response>", "text/xml");
+                var command = parts[0].Trim();
+                if (!int.TryParse(parts[1].Trim(), out int orderId)) return Ok();
 
-                if (!int.TryParse(parts[1], out int orderId))
-                    return Content("<Response></Response>", "text/xml");
-
-                var command = parts[0];
+                string cleanNumber = From.Replace("whatsapp:", "");
 
                 if (command == "ACCEPT" || command == "APPROVE")
                 {
+                    // Assuming 0 is the UserId for system/automated changes
                     await _orderService.ApproveBySales(orderId, 0);
 
                     Console.WriteLine($"✅ Order {orderId} approved via WhatsApp");
 
                     await _orderService.SendWhatsapp(
-                        from.Replace("whatsapp:", ""),
+                        cleanNumber,
                         $"✅ Order #{orderId} has been approved successfully."
                     );
                 }
                 else if (command == "REJECT")
                 {
-                    _orderService.RejectBySales(orderId, 0);
+                    await _orderService.RejectBySales(orderId, 0);
 
                     Console.WriteLine($"❌ Order {orderId} rejected via WhatsApp");
 
                     await _orderService.SendWhatsapp(
-                        from.Replace("whatsapp:", ""),
+                        cleanNumber,
                         $"❌ Order #{orderId} has been rejected."
                     );
                 }
@@ -70,6 +74,7 @@ namespace PrivateECommerce.API.Controllers
                 Console.WriteLine($"⚠ Error processing WhatsApp command: {ex.Message}");
             }
 
+            // Always return TwiML (empty is fine) to acknowledge receipt to Twilio
             return Content("<Response></Response>", "text/xml");
         }
     }
