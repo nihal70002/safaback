@@ -30,8 +30,8 @@ namespace PrivateECommerce.API.Services
         IEnumerable<AdminOrderListDto> GetRecentOrders(int count);
         AdminOrderDetailDto GetOrderById(int orderId);
         IEnumerable<object> GetPendingOrdersForWarehouse();
-        
 
+        Task SendWhatsapp(string phone, string message);
 
         Task<OrderDetailsDto?> GetMyOrderDetailsAsync(int userId, int orderId);
 

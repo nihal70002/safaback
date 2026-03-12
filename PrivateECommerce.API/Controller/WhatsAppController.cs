@@ -19,21 +19,55 @@ namespace PrivateECommerce.API.Controllers
         {
             var form = Request.Form;
 
-            var message = form["Body"].ToString();
+            var message = form["Body"].ToString().Trim().ToUpper();
             var from = form["From"].ToString();
 
-            Console.WriteLine($"WhatsApp message received: {message}");
-            Console.WriteLine($"From: {from}");
+            Console.WriteLine($"📩 WhatsApp message received: {message}");
+            Console.WriteLine($"📱 From: {from}");
 
-            // Example message: APPROVE-12
-            if (message.StartsWith("APPROVE-"))
+            if (!message.Contains("-"))
+                return Ok();
+
+            var parts = message.Split("-");
+
+            if (parts.Length != 2)
+                return Ok();
+
+            if (!int.TryParse(parts[1], out int orderId))
+                return Ok();
+
+            var command = parts[0];
+
+            try
             {
-                var orderId = int.Parse(message.Split("-")[1]);
+                if (command == "ACCEPT" || command == "APPROVE")
+                {
+                    await _orderService.ApproveBySales(orderId, 0);
 
-                // here we approve order
-                await _orderService.ApproveBySales(orderId, 0);
+                    Console.WriteLine($"✅ Order {orderId} approved via WhatsApp");
 
-                return Ok("Order approved");
+                    // confirmation message
+                    await _orderService.SendWhatsapp(
+                        from.Replace("whatsapp:", ""),
+                        $"✅ Order #{orderId} has been approved successfully."
+                    );
+                }
+                else if (command == "REJECT")
+                {
+                    _orderService.RejectBySales(orderId, 0);
+
+                    Console.WriteLine($"❌ Order {orderId} rejected via WhatsApp");
+
+                    // confirmation message
+                    await _orderService.SendWhatsapp(
+                        from.Replace("whatsapp:", ""),
+                        $"❌ Order #{orderId} has been rejected."
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠ Error processing WhatsApp command: {ex.Message}");
             }
 
             return Ok();
