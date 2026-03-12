@@ -1,7 +1,7 @@
 ﻿using PrivateECommerce.API.DTOs;
 using PrivateECommerce.API.DTOs.Admin;
 using PrivateECommerce.API.DTOs.Sales;
-
+using PrivateECommerce.API.Models;
 namespace PrivateECommerce.API.Services
 {
     public interface IOrderService
@@ -19,7 +19,7 @@ namespace PrivateECommerce.API.Services
         CustomerOrderDto GetCustomerOrderHistory(int salesExecutiveId, int customerId);
         List<SalesOrderListDto> GetPendingOrdersForSales(int salesExecutiveId);
         List<SalesOrderListDto> GetOrdersForSalesExecutive(int salesExecutiveId);
-        Task ApproveBySales(int orderId, int approverUserId, bool isAdmin = false);
+        Task<Order> ApproveBySales(int orderId, int approverUserId, bool isAdmin = false);
 
         Task RejectBySales(int orderId, int salesId);
 

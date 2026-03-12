@@ -88,24 +88,38 @@ namespace PrivateECommerce.API.Controllers
         // ==========================
         // SALES EXECUTIVE: APPROVE ORDER
         // ==========================
-       
-[HttpPost("sales/{orderId}/approve")]
-[Authorize(Roles = "SalesExecutive")]
-public async Task<IActionResult> ApproveOrderBySales(int orderId)
+
+        [HttpPut("sales/orders/{orderId}/approve")]
+        [Authorize(Roles = "SalesExecutive")]
+        public async Task<IActionResult> ApproveOrderBySales(int orderId)
         {
             try
             {
-                int salesId = int.Parse(
-                    User.FindFirstValue(ClaimTypes.NameIdentifier)!
-                );
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                await _orderService.ApproveBySales(orderId, salesId);
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    return Unauthorized(new { message = "Invalid user token." });
+                }
 
-                return Ok(new { message = "Order approved successfully" });
+                int salesId = int.Parse(userIdClaim);
+
+                var order = await _orderService.ApproveBySales(orderId, salesId);
+
+                return Ok(new
+                {
+                    message = "Order approved successfully",
+                    orderId = order.Id,
+                    newStatus = order.Status
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new
+                {
+                    message = "Order approval failed",
+                    error = ex.Message
+                });
             }
         }
 
