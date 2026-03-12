@@ -17,6 +17,8 @@ namespace PrivateECommerce.API.Controllers
         [HttpPost("webhook")]
         public async Task<IActionResult> ReceiveMessage()
         {
+            Console.WriteLine("🔥 WHATSAPP WEBHOOK HIT");
+
             var form = Request.Form;
 
             var message = form["Body"].ToString().Trim().ToUpper();
@@ -25,28 +27,27 @@ namespace PrivateECommerce.API.Controllers
             Console.WriteLine($"📩 WhatsApp message received: {message}");
             Console.WriteLine($"📱 From: {from}");
 
-            if (!message.Contains("-"))
-                return Ok();
-
-            var parts = message.Split("-");
-
-            if (parts.Length != 2)
-                return Ok();
-
-            if (!int.TryParse(parts[1], out int orderId))
-                return Ok();
-
-            var command = parts[0];
-
             try
             {
+                if (!message.Contains("-"))
+                    return Content("<Response></Response>", "text/xml");
+
+                var parts = message.Split("-");
+
+                if (parts.Length != 2)
+                    return Content("<Response></Response>", "text/xml");
+
+                if (!int.TryParse(parts[1], out int orderId))
+                    return Content("<Response></Response>", "text/xml");
+
+                var command = parts[0];
+
                 if (command == "ACCEPT" || command == "APPROVE")
                 {
                     await _orderService.ApproveBySales(orderId, 0);
 
                     Console.WriteLine($"✅ Order {orderId} approved via WhatsApp");
 
-                    // confirmation message
                     await _orderService.SendWhatsapp(
                         from.Replace("whatsapp:", ""),
                         $"✅ Order #{orderId} has been approved successfully."
@@ -58,7 +59,6 @@ namespace PrivateECommerce.API.Controllers
 
                     Console.WriteLine($"❌ Order {orderId} rejected via WhatsApp");
 
-                    // confirmation message
                     await _orderService.SendWhatsapp(
                         from.Replace("whatsapp:", ""),
                         $"❌ Order #{orderId} has been rejected."
@@ -70,7 +70,7 @@ namespace PrivateECommerce.API.Controllers
                 Console.WriteLine($"⚠ Error processing WhatsApp command: {ex.Message}");
             }
 
-            return Ok();
+            return Content("<Response></Response>", "text/xml");
         }
     }
 }
