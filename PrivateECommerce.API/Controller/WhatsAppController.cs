@@ -44,7 +44,7 @@ namespace PrivateECommerce.API.Controllers
                     return Content("<Response></Response>", "text/xml");
                 }
 
-                var parts = message.Split('-', 2);
+                var parts = message.Split('-', 3);
 
                 var command = parts[0].Trim();
 
