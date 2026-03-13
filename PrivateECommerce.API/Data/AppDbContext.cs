@@ -94,6 +94,9 @@ namespace PrivateECommerce.API.Data
 
             modelBuilder.Entity<Order>()
                 .HasIndex(o => o.CreatedAt);
+            modelBuilder.Entity<Order>()
+        .Property(o => o.Status)
+        .HasConversion<string>();
 
             modelBuilder.Entity<Order>()
                 .HasIndex(o => new { o.Status, o.CreatedAt });

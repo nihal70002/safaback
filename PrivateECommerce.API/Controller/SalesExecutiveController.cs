@@ -128,9 +128,9 @@ namespace PrivateECommerce.API.Controllers
         // 6️⃣ APPROVE ORDER
         // ===========================
         [HttpPut("orders/{orderId}/approve")]
-        public IActionResult ApproveOrder(int orderId)
+        public async Task<IActionResult> ApproveOrder(int orderId)
         {
-            _orderService.ApproveBySales(orderId, SalesExecutiveId);
+            await _orderService.ApproveBySales(orderId, SalesExecutiveId);
             return Ok(new { message = "Order approved successfully" });
         }
 

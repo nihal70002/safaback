@@ -91,38 +91,33 @@ namespace PrivateECommerce.API.Controllers
 
         [HttpPut("sales/orders/{orderId}/approve")]
         [Authorize(Roles = "SalesExecutive")]
+        
         public async Task<IActionResult> ApproveOrderBySales(int orderId)
         {
             try
             {
                 var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (string.IsNullOrEmpty(userIdClaim))
-                {
-                    return Unauthorized(new { message = "Invalid user token." });
-                }
+                if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
 
                 int salesId = int.Parse(userIdClaim);
 
+                // This call MUST be awaited
                 var order = await _orderService.ApproveBySales(orderId, salesId);
 
+                // If we reach here, it means the service didn't throw an exception
                 return Ok(new
                 {
                     message = "Order approved successfully",
                     orderId = order.Id,
-                    newStatus = order.Status
+                    status = order.Status
                 });
             }
             catch (Exception ex)
             {
-                return BadRequest(new
-                {
-                    message = "Order approval failed",
-                    error = ex.Message
-                });
+                // This is where 'Order not found' will end up
+                return BadRequest(new { message = ex.Message });
             }
         }
-
 
 
         // ==========================
