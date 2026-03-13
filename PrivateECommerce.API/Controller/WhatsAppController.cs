@@ -80,13 +80,25 @@ namespace PrivateECommerce.API.Controllers
                 {
                     Console.WriteLine("🚀 Calling RejectBySales service...");
 
-                    await _orderService.RejectBySales(orderId, 0);
+                    var reason = parts.Length > 2 ? parts[2].Trim() : "";
+
+                    if (string.IsNullOrWhiteSpace(reason))
+                    {
+                        await _orderService.SendWhatsapp(
+                            sender,
+                            $"⚠ Please provide a reason.\nExample:\nREJECT-{orderId}-Out of stock"
+                        );
+
+                        return Content("<Response></Response>", "text/xml");
+                    }
+
+                    await _orderService.RejectBySales(orderId, 0, reason);
 
                     Console.WriteLine($"❌ Order {orderId} rejected in DB");
 
                     await _orderService.SendWhatsapp(
                         sender,
-                        $"❌ Order #{orderId} has been rejected."
+                        $"❌ Order #{orderId} has been rejected.\nReason: {reason}"
                     );
                 }
                 else

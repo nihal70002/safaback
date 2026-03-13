@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrivateECommerce.API.DTOs;
+using PrivateECommerce.API.DTOs.Orders;
 using PrivateECommerce.API.Services;
 using System.Security.Claims;
 
@@ -102,7 +103,7 @@ namespace PrivateECommerce.API.Controllers
                 int salesId = int.Parse(userIdClaim);
 
                 // This call MUST be awaited
-                var order = await _orderService.ApproveBySales(orderId, salesId);
+                var order = await _orderService.ApproveBySales(orderId, salesId, false);
 
                 // If we reach here, it means the service didn't throw an exception
                 return Ok(new
@@ -123,16 +124,31 @@ namespace PrivateECommerce.API.Controllers
         // ==========================
         // SALES EXECUTIVE: REJECT ORDER
         // ==========================
-        [HttpPost("sales/{orderId}/reject")]
+        [HttpPost("cancel/{orderId}")]
         [Authorize(Roles = "SalesExecutive")]
-        public IActionResult RejectOrderBySales(int orderId)
+        public async Task<IActionResult> CancelOrder(int orderId, [FromBody] RejectOrderDto dto)
         {
-            int salesId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized();
 
-            _orderService.RejectBySales(orderId, salesId);
-            return Ok(new { message = "Order rejected successfully" });
+                int salesId = int.Parse(userIdClaim);
+
+                await _orderService.RejectBySales(orderId, salesId, dto.Reason);
+
+                return Ok(new
+                {
+                    message = "Order rejected by sales",
+                    orderId = orderId,
+                    reason = dto.Reason
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

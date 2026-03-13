@@ -21,7 +21,7 @@ namespace PrivateECommerce.API.Services
         List<SalesOrderListDto> GetOrdersForSalesExecutive(int salesExecutiveId);
         Task<Order> ApproveBySales(int orderId, int approverUserId, bool isAdmin = false);
 
-        Task RejectBySales(int orderId, int salesId);
+        Task RejectBySales(int orderId, int salesId, string reason);
 
         // ===========================
         // ADMIN

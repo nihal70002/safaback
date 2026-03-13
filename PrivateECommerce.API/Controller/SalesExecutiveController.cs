@@ -138,12 +138,30 @@ namespace PrivateECommerce.API.Controllers
         // 7️⃣ REJECT ORDER
         // ===========================
         [HttpPost("cancel/{orderId}")]
-        public IActionResult CancelOrder(
-            int orderId,
-            [FromBody] RejectOrderDto dto)
+        [Authorize(Roles = "SalesExecutive")]
+        public async Task<IActionResult> CancelOrder(int orderId, [FromBody] RejectOrderDto dto)
         {
-            _orderService.CancelOrder(orderId, dto.Reason);
-            return Ok("Order cancelled by sales");
+            try
+            {
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized();
+
+                int salesId = int.Parse(userIdClaim);
+
+                await _orderService.RejectBySales(orderId, salesId, dto.Reason);
+
+                return Ok(new
+                {
+                    message = "Order rejected by sales",
+                    orderId = orderId,
+                    reason = dto.Reason
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // ===========================
