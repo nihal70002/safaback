@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PrivateECommerce.API.Services;
 
 namespace PrivateECommerce.API.Controllers
@@ -21,17 +20,20 @@ namespace PrivateECommerce.API.Controllers
         {
             Console.WriteLine("🔥 WHATSAPP WEBHOOK HIT");
 
-            if (string.IsNullOrWhiteSpace(Body))
-                return Content("<Response></Response>", "text/xml");
-
-            var message = Body.Trim().ToUpper();
-            var sender = From.Replace("whatsapp:", "");
-
-            Console.WriteLine($"📩 WhatsApp message received: {message}");
-            Console.WriteLine($"📱 From: {sender}");
-
             try
             {
+                if (string.IsNullOrWhiteSpace(Body))
+                {
+                    Console.WriteLine("⚠ Empty WhatsApp message received");
+                    return Content("<Response></Response>", "text/xml");
+                }
+
+                var message = Body.Trim().ToUpper();
+                var sender = From?.Replace("whatsapp:", "");
+
+                Console.WriteLine($"📩 Message: {message}");
+                Console.WriteLine($"📱 Sender: {sender}");
+
                 if (!message.Contains("-"))
                 {
                     await _orderService.SendWhatsapp(
@@ -42,20 +44,32 @@ namespace PrivateECommerce.API.Controllers
                     return Content("<Response></Response>", "text/xml");
                 }
 
-                var parts = message.Split("-");
-                if (parts.Length != 2)
-                    return Content("<Response></Response>", "text/xml");
+                var parts = message.Split('-', 2);
 
                 var command = parts[0].Trim();
 
                 if (!int.TryParse(parts[1].Trim(), out int orderId))
+                {
+                    Console.WriteLine("⚠ Invalid order id");
+
+                    await _orderService.SendWhatsapp(
+                        sender,
+                        "❌ Invalid Order ID."
+                    );
+
                     return Content("<Response></Response>", "text/xml");
+                }
+
+                Console.WriteLine($"📦 Parsed OrderId: {orderId}");
+                Console.WriteLine($"📌 Command: {command}");
 
                 if (command == "APPROVE" || command == "ACCEPT")
                 {
+                    Console.WriteLine("🚀 Calling ApproveBySales service...");
+
                     await _orderService.ApproveBySales(orderId, 0);
 
-                    Console.WriteLine($"✅ Order {orderId} approved via WhatsApp");
+                    Console.WriteLine($"✅ Order {orderId} approved in DB");
 
                     await _orderService.SendWhatsapp(
                         sender,
@@ -64,9 +78,11 @@ namespace PrivateECommerce.API.Controllers
                 }
                 else if (command == "REJECT")
                 {
+                    Console.WriteLine("🚀 Calling RejectBySales service...");
+
                     await _orderService.RejectBySales(orderId, 0);
 
-                    Console.WriteLine($"❌ Order {orderId} rejected via WhatsApp");
+                    Console.WriteLine($"❌ Order {orderId} rejected in DB");
 
                     await _orderService.SendWhatsapp(
                         sender,
@@ -75,6 +91,8 @@ namespace PrivateECommerce.API.Controllers
                 }
                 else
                 {
+                    Console.WriteLine("⚠ Unknown command received");
+
                     await _orderService.SendWhatsapp(
                         sender,
                         "❌ Unknown command. Use APPROVE-ID or REJECT-ID"
@@ -83,11 +101,11 @@ namespace PrivateECommerce.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"⚠ Webhook error: {ex}");
+                Console.WriteLine($"🔥 WEBHOOK ERROR: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
             }
 
             return Content("<Response></Response>", "text/xml");
         }
     }
 }
-
