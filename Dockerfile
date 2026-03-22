@@ -5,8 +5,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 COPY . .
-RUN dotnet restore PrivateECommerce.csproj
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet restore PrivateECommerce.API/PrivateECommerce.API.csproj
+RUN dotnet publish PrivateECommerce.API/PrivateECommerce.API.csproj -c Release -o /app/publish
 
 # -----------------------
 # Runtime stage
