@@ -5,6 +5,8 @@
         public int ProductId { get; set; }
 
         public required string Name { get; set; }
+
+        public string? NameArabic { get; set; }
         public string ProductCode { get; set; }
         public int CategoryId { get; set; }        // ✅ FIX
         public required string CategoryName { get; set; }   // ✅ FIX

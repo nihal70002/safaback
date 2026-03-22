@@ -32,6 +32,8 @@ namespace PrivateECommerce.API.Services
                 {
                     ProductId = p.Id,
                     Name = p.Name,
+                    NameArabic = p.NameArabic,
+
                     ProductCode = p.ProductCode,
                     CategoryId = p.CategoryId,
                     Description = p.Description,
@@ -163,6 +165,7 @@ namespace PrivateECommerce.API.Services
                 {
                     ProductId = p.Id,
                     Name = p.Name,
+                    NameArabic = p.NameArabic,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
                     BrandId = p.BrandId,
@@ -217,13 +220,18 @@ namespace PrivateECommerce.API.Services
                 .Include(p => p.Images)
                 .Include(p => p.Variants)
                 .Where(p => p.IsActive &&
-                    EF.Functions.ILike(p.Name, $"%{query}%"))
+                    (
+                        EF.Functions.ILike(p.Name, $"%{query}%") ||
+                        EF.Functions.ILike(p.NameArabic, $"%{query}%")
+                    )
+                )
                 .OrderByDescending(p => p.Id)
                 .Take(5)
                 .Select(p => new ProductSearchSuggestionDto
                 {
                     ProductId = p.Id,
                     Name = p.Name,
+                    NameArabic = p.NameArabic,
                     BrandName = p.Brand.BrandName,
                     PrimaryImageUrl = p.Images
                         .Where(i => i.IsPrimary)
@@ -236,7 +244,6 @@ namespace PrivateECommerce.API.Services
                 })
                 .ToList();
         }
-
 
         // USER – PRODUCT DETAILS
         // ===========================
@@ -254,6 +261,7 @@ namespace PrivateECommerce.API.Services
             {
                 ProductId = product.Id,
                 Name = product.Name,
+                NameArabic = product.NameArabic,
                 CategoryId = product.CategoryId,
                 ProductCode = product.ProductCode,
                 CategoryName = product.Category.Name,
@@ -339,6 +347,7 @@ namespace PrivateECommerce.API.Services
                 var product = new Product
                 {
                     Name = dto.Name,
+                    NameArabic = dto.NameArabic,
                     CategoryId = dto.CategoryId,
                     BrandId = dto.BrandId,
                     Description = dto.Description,
@@ -410,6 +419,7 @@ namespace PrivateECommerce.API.Services
 
                 // 1. Basic Updates
                 product.Name = dto.Name;
+                product.NameArabic = dto.NameArabic;
                 product.CategoryId = dto.CategoryId;
                 product.BrandId = dto.BrandId;
                 product.Description = dto.Description;
@@ -581,6 +591,7 @@ namespace PrivateECommerce.API.Services
                     var product = new Product
                     {
                         Name = dto.Name,
+                        NameArabic = dto.NameArabic,
                         CategoryId = dto.CategoryId,
                         BrandId = dto.BrandId,
                         Description = dto.Description,

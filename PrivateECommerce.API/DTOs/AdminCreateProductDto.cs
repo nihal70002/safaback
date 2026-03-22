@@ -3,6 +3,7 @@
     public class AdminCreateProductDto
     {
         public required string Name { get; set; }
+        public string? NameArabic { get; set; }
 
         public int CategoryId { get; set; }   // ✅ MUST BE int
         
