@@ -5,6 +5,8 @@ public class ProductListDto
     public int ProductId { get; set; }
     public string Name { get; set; }
     public string ProductCode { get; set; }
+
+    public string? NameArabic { get; set; }
     public int CategoryId { get; set; }
     public string CategoryName { get; set; }
 

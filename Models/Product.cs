@@ -10,7 +10,7 @@ namespace ClientEcommerce.API.Models
         public string? ProductCode { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; } = null!;
-
+        public string? NameArabic { get; set; }
         public required string Description { get; set; }
         public ICollection<ProductImage> Images { get; set; } = [];
 

@@ -34,6 +34,7 @@ namespace ClientEcommerce.API.Services
                 {
                     ProductId = p.Id,
                     Name = p.Name,
+                    NameArabic = p.NameArabic,
                     ProductCode = p.ProductCode,
                     CategoryId = p.CategoryId,
                     Description = p.Description, // admin products description fix
@@ -94,11 +95,11 @@ namespace ClientEcommerce.API.Services
 
 
         public PagedResponseDto<ProductListDto> GetProducts(
-     int page,
-     int pageSize,
-     List<int>? categoryIds,
-     int? brandId,
-     string? search)
+    int page,
+    int pageSize,
+    List<int>? categoryIds,
+    int? brandId,
+    string? search)
         {
             int version = GetCacheVersion();
 
@@ -156,9 +157,12 @@ namespace ClientEcommerce.API.Services
             if (brandId.HasValue)
                 query = query.Where(p => p.BrandId == brandId.Value);
 
-            // 🔹 SEARCH FILTER
+            // 🔹 SEARCH FILTER (English + Arabic)
             if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(p => p.Name.Contains(search));
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    p.NameArabic.Contains(search)
+                );
 
             // 🔹 TOTAL COUNT (before pagination)
             var totalCount = query.Count();
@@ -166,7 +170,7 @@ namespace ClientEcommerce.API.Services
             // 🔹 ORDERING
             query = query.OrderByDescending(p => p.Id);
 
-            // 🔹 PAGINATION + PROJECTION (NO Include needed)
+            // 🔹 PAGINATION + PROJECTION
             var items = query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -174,6 +178,7 @@ namespace ClientEcommerce.API.Services
                 {
                     ProductId = p.Id,
                     Name = p.Name,
+                    NameArabic = p.NameArabic,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
                     BrandId = p.BrandId,
@@ -193,6 +198,7 @@ namespace ClientEcommerce.API.Services
                 })
                 .ToList();
 
+            // 🔹 BUILD RESPONSE
             var result = new PagedResponseDto<ProductListDto>
             {
                 Items = items,
@@ -202,6 +208,7 @@ namespace ClientEcommerce.API.Services
                 HasMore = page * pageSize < totalCount
             };
 
+            // 🔹 CACHE RESPONSE
             _cache.SetString(
                 cacheKey,
                 JsonSerializer.Serialize(result),
@@ -212,7 +219,6 @@ namespace ClientEcommerce.API.Services
 
             return result;
         }
-
 
 
 
@@ -234,6 +240,7 @@ namespace ClientEcommerce.API.Services
             {
                 ProductId = product.Id,
                 Name = product.Name,
+                NameArabic = product.NameArabic,
                 CategoryId = product.CategoryId,
                 ProductCode = product.ProductCode,
                 CategoryName = product.Category.Name,
@@ -331,6 +338,7 @@ namespace ClientEcommerce.API.Services
                 var product = new Product
                 {
                     Name = dto.Name,
+                    NameArabic = dto.NameArabic,
                     CategoryId = dto.CategoryId,
                     BrandId = dto.BrandId,
                     Description = dto.Description,
@@ -416,6 +424,7 @@ namespace ClientEcommerce.API.Services
 
 
             product.Name = dto.Name;
+            product.NameArabic = dto.NameArabic;
             product.CategoryId = dto.CategoryId;
 
             product.BrandId = dto.BrandId;
