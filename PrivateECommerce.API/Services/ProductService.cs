@@ -157,6 +157,8 @@ namespace PrivateECommerce.API.Services
                 .OrderByDescending(p => p.Id);
 
             var totalCount = query.Count();
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
 
             var items = query
                 .Skip((page - 1) * pageSize)
@@ -193,7 +195,8 @@ namespace PrivateECommerce.API.Services
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
-                HasMore = page * pageSize < totalCount
+                TotalPages = totalPages,
+                HasMore = page < totalPages
             };
 
             _cache.SetString(
