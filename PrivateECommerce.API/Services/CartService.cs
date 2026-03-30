@@ -100,7 +100,7 @@ namespace PrivateECommerce.API.Services
                    ProductVariantId = c.ProductVariantId,
                    ProductName = c.ProductVariant.Product.Name,
                    Size = c.ProductVariant.Size,
-                   ProductId = i.ProductVariant.ProductId,
+                   ProductId = c.ProductVariant.ProductId,
 
                    // ✅ ADD THESE
                    Class = c.ProductVariant.Class,
