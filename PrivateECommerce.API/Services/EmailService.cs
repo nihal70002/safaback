@@ -30,7 +30,9 @@ public class EmailService : IEmailService
             {
                 EnableSsl = true,
                 Credentials = new NetworkCredential(user, pass),
-                Timeout = 10000
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Timeout = 5000
             };
 
             Console.WriteLine("SMTP CLIENT CREATED");
