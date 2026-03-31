@@ -42,19 +42,14 @@ namespace PrivateECommerce.API.Controllers
 
 
         [HttpDelete("{id}/cancel")]
+        [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CancelOrder(int id)
         {
-            var userId = GetUserId();
+            int userId = int.Parse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!
+            );
 
-            var order = await _context.Orders
-                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
-
-            if (order == null)
-                return NotFound();
-
-            order.Status = "Cancelled";
-
-            await _context.SaveChangesAsync();
+            await _orderService.CancelOrderByCustomer(id, userId);
 
             return Ok(new { message = "Order cancelled successfully" });
         }
