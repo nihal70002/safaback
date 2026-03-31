@@ -52,7 +52,7 @@ public class AuthService : IAuthService
     // 📧 FORGOT PASSWORD
     public async Task ForgotPasswordAsync(string email)
     {
-        email = email.Trim().ToLower(); // 🔑 normalize input
+        email = email.Trim().ToLower();
 
         Console.WriteLine($"ForgotPasswordAsync called with: {email}");
 
@@ -82,15 +82,18 @@ public class AuthService : IAuthService
 
         Console.WriteLine($"Sending reset email to {user.Email}");
 
-        await _emailService.SendAsync(
-            user.Email,
-            "Reset your PrivateCommerce password",
-            $"Click here to reset your password: {resetLink}"
-        );
+        // 🚀 send email in background (non-blocking)
+        _ = Task.Run(async () =>
+        {
+            await _emailService.SendAsync(
+                user.Email,
+                "Reset your PrivateCommerce password",
+                $"Click here to reset your password: {resetLink}"
+            );
 
-        Console.WriteLine("Reset email SENT");
+            Console.WriteLine("Reset email SENT");
+        });
     }
-
 
     // 🔄 RESET PASSWORD
     public async Task ResetPasswordAsync(string token, string newPassword)
