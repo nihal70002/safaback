@@ -41,6 +41,22 @@ namespace PrivateECommerce.API.Controllers
         }
 
 
+
+        [HttpPut("{id}/edit")]
+        public async Task<IActionResult> EditOrder(int id, PlaceOrderByCustomerDto dto)
+        {
+            int userId = int.Parse(
+    User.FindFirstValue(ClaimTypes.NameIdentifier)!
+);
+
+            await _orderService.UpdateOrderByCustomer(id, userId, dto);
+
+            return Ok("Order updated");
+        }
+
+
+
+
         [HttpGet("my/{orderId}")]
         public async Task<IActionResult> GetMyOrderDetails(int orderId)
         {

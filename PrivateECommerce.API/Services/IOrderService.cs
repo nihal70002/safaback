@@ -9,10 +9,26 @@ namespace PrivateECommerce.API.Services
         // ===========================
         // CUSTOMER
         // ===========================
-        Task PlaceOrder(int customerId, PlaceOrderByCustomerDto dto);
-        IEnumerable<UserOrderListDto> GetOrdersForUser(int userId);
-        UserOrderDetailDto GetOrderForUser(int orderId, int userId);
 
+        Task PlaceOrder(int customerId, PlaceOrderByCustomerDto dto);
+
+        Task UpdateOrderByCustomer(
+            int orderId,
+            int customerId,
+            PlaceOrderByCustomerDto dto
+        );
+
+        Task CancelOrderByCustomer(
+            int orderId,
+            int customerId
+        );
+
+        IEnumerable<UserOrderListDto> GetOrdersForUser(int userId);
+
+        UserOrderDetailDto GetOrderForUser(
+            int orderId,
+            int userId
+        );
         // ===========================
         // SALES EXECUTIVE
         // ===========================
