@@ -20,13 +20,17 @@ public class EmailService : IEmailService
             var port = _config["Smtp:Port"];
             var user = _config["Smtp:User"];
             var pass = _config["Smtp:Pass"];
+            var displayName = _config["Smtp:DisplayName"] ?? "Medico KSA";
+
+            Console.WriteLine("EMAIL STEP 1: Config loaded");
 
             if (string.IsNullOrWhiteSpace(host) ||
                 string.IsNullOrWhiteSpace(port) ||
                 string.IsNullOrWhiteSpace(user) ||
                 string.IsNullOrWhiteSpace(pass))
             {
-                throw new Exception("SMTP configuration is missing");
+                Console.WriteLine("EMAIL ERROR: SMTP config missing");
+                return;
             }
 
             using var smtp = new SmtpClient(host, int.Parse(port))
@@ -34,12 +38,15 @@ public class EmailService : IEmailService
                 EnableSsl = true,
                 Credentials = new NetworkCredential(user, pass),
                 DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false
+                UseDefaultCredentials = false,
+                Timeout = 10000
             };
+
+            Console.WriteLine("EMAIL STEP 2: SMTP ready");
 
             using var message = new MailMessage
             {
-                From = new MailAddress(user, "PrivateCommerce"),
+                From = new MailAddress(user, displayName),
                 Subject = subject,
                 Body = body,
                 IsBodyHtml = true
@@ -47,13 +54,15 @@ public class EmailService : IEmailService
 
             message.To.Add(to);
 
+            Console.WriteLine("EMAIL STEP 3: Sending email");
+
             await smtp.SendMailAsync(message);
+
+            Console.WriteLine("EMAIL STEP 4: Email sent successfully");
         }
         catch (Exception ex)
         {
-            // 🔍 log only, do NOT throw
-            Console.WriteLine($"Email send failed: {ex.Message}");
-            return; // let AuthService decide what to do
+            Console.WriteLine("EMAIL ERROR: " + ex.Message);
         }
     }
 }
