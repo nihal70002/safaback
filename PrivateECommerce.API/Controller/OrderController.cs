@@ -41,6 +41,24 @@ namespace PrivateECommerce.API.Controllers
         }
 
 
+        [HttpDelete("{id}/cancel")]
+        public async Task<IActionResult> CancelOrder(int id)
+        {
+            var userId = GetUserId();
+
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == userId);
+
+            if (order == null)
+                return NotFound();
+
+            order.Status = "Cancelled";
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Order cancelled successfully" });
+        }
+
 
         [HttpPut("{id}/edit")]
         public async Task<IActionResult> EditOrder(int id, PlaceOrderByCustomerDto dto)
