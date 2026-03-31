@@ -20,33 +20,24 @@ public class EmailService : IEmailService
             var port = _config["Smtp:Port"];
             var user = _config["Smtp:User"];
             var pass = _config["Smtp:Pass"];
-            var displayName = _config["Smtp:DisplayName"] ?? "Medico KSA";
 
-            Console.WriteLine("EMAIL STEP 1: Config loaded");
-
-            if (string.IsNullOrWhiteSpace(host) ||
-                string.IsNullOrWhiteSpace(port) ||
-                string.IsNullOrWhiteSpace(user) ||
-                string.IsNullOrWhiteSpace(pass))
-            {
-                Console.WriteLine("EMAIL ERROR: SMTP config missing");
-                return;
-            }
+            Console.WriteLine("SMTP HOST = " + host);
+            Console.WriteLine("SMTP PORT = " + port);
+            Console.WriteLine("SMTP USER = " + user);
+            Console.WriteLine("SMTP PASS LENGTH = " + (pass?.Length ?? 0));
 
             using var smtp = new SmtpClient(host, int.Parse(port))
             {
                 EnableSsl = true,
                 Credentials = new NetworkCredential(user, pass),
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false,
                 Timeout = 10000
             };
 
-            Console.WriteLine("EMAIL STEP 2: SMTP ready");
+            Console.WriteLine("SMTP CLIENT CREATED");
 
             using var message = new MailMessage
             {
-                From = new MailAddress(user, displayName),
+                From = new MailAddress(user, "Medico KSA"),
                 Subject = subject,
                 Body = body,
                 IsBodyHtml = true
@@ -54,15 +45,16 @@ public class EmailService : IEmailService
 
             message.To.Add(to);
 
-            Console.WriteLine("EMAIL STEP 3: Sending email");
+            Console.WriteLine("SENDING EMAIL NOW");
 
             await smtp.SendMailAsync(message);
 
-            Console.WriteLine("EMAIL STEP 4: Email sent successfully");
+            Console.WriteLine("EMAIL SENT SUCCESSFULLY");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("EMAIL ERROR: " + ex.Message);
+            Console.WriteLine("EMAIL ERROR:");
+            Console.WriteLine(ex.ToString());
+            throw;
         }
     }
-}
