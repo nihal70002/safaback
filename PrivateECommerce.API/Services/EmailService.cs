@@ -33,7 +33,8 @@ public class EmailService : IEmailService
             {
                 EnableSsl = true,
                 Credentials = new NetworkCredential(user, pass),
-                Timeout = 10000 // 10 seconds
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
             };
 
             using var message = new MailMessage
@@ -52,7 +53,7 @@ public class EmailService : IEmailService
         {
             // 🔍 log only, do NOT throw
             Console.WriteLine($"Email send failed: {ex.Message}");
-            throw; // let AuthService decide what to do
+            return; // let AuthService decide what to do
         }
     }
 }
