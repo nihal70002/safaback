@@ -7,9 +7,10 @@
         public required string Name { get; set; }
 
         public string? NameArabic { get; set; }
-        public string ProductCode { get; set; }
+        
         public int CategoryId { get; set; }        // ✅ FIX
         public required string CategoryName { get; set; }   // ✅ FIX
+        public string? ProductCode { get; set; }   // optional OR remove completely
 
         public required string Description { get; set; }
         public List<string> ImageUrls { get; set; } = new();
