@@ -290,6 +290,7 @@ namespace PrivateECommerce.API.Services
                     Style = v.Style,
                     Material = v.Material,
                     Color = v.Color,
+                    ProductCode = v.ProductCode,
 
                     Price = v.Price,
                     AvailableStock = v.Stock
