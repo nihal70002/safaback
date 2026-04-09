@@ -1,10 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY PrivateECommerce.API/PrivateECommerce.API.csproj PrivateECommerce.API/
+COPY . .
 RUN dotnet restore PrivateECommerce.API/PrivateECommerce.API.csproj
 
-COPY . .
 WORKDIR /src/PrivateECommerce.API
 RUN dotnet publish -c Release -o /app/publish
 
