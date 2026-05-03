@@ -15,3 +15,5 @@ obj/
 # App settings
 appsettings.Development.json
 appsettings.Production.json
+PrivateECommerce.API/appsettings.Development.json
+PrivateECommerce.API/appsettings.Production.json
