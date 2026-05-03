@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PrivateECommerce.API.DTOs;
 using PrivateECommerce.API.Services;
 
@@ -22,11 +23,11 @@ namespace PrivateECommerce.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public IActionResult AddBrand([FromBody] CreateBrandDto dto)
         {
             _service.CreateBrand(dto);
-            return Ok(new { message = "Brand created successfully" });
+            return Ok(ApiResponse.Ok("Brand created successfully"));
         }
-
     }
 }

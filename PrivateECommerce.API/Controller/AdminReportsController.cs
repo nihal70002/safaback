@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace PrivateECommerce.API.Controllers
 {
     [ApiController]
     [Route("api/admin/reports")]
+    [Authorize(Roles = "Admin")]
     public class AdminReportsController : ControllerBase
     {
         private readonly IAdminReportService _service;
@@ -30,6 +32,7 @@ namespace PrivateECommerce.API.Controllers
         {
             return Ok(_service.GetTopProducts());
         }
+
         [HttpGet("top-customers")]
         public IActionResult GetTopCustomers()
         {
@@ -41,6 +44,5 @@ namespace PrivateECommerce.API.Controllers
         {
             return Ok(_service.GetCustomerProductInterest(userId));
         }
-
     }
 }

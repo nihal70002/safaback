@@ -1,7 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
-using System;
 
 namespace PrivateECommerce.API.Data
 {
@@ -11,32 +9,23 @@ namespace PrivateECommerce.API.Data
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.Development.json", optional: false)
-
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Development.json", optional: true)
                 .AddEnvironmentVariables()
                 .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-
-            // 1️⃣ Try local connection string first
-            var connectionString =
-                configuration.GetConnectionString("DefaultConnection");
-
-            // 2️⃣ Fallback to Railway DATABASE_URL
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                connectionString = configuration["DATABASE_URL"];
-            }
+            var connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? configuration["DATABASE_URL"]
+                ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new InvalidOperationException(
-                    "Database connection string not found. " +
-                    "Set ConnectionStrings:DefaultConnection or DATABASE_URL.");
+                    "Database connection string not found. Set ConnectionStrings:DefaultConnection or DATABASE_URL.");
             }
 
-            // 3️⃣ Convert Railway postgres:// URL if needed
-            if (connectionString.StartsWith("postgres://"))
+            if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+                connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
             {
                 var uri = new Uri(connectionString);
                 var userInfo = uri.UserInfo.Split(':', 2);
@@ -44,13 +33,14 @@ namespace PrivateECommerce.API.Data
                 connectionString =
                     $"Host={uri.Host};" +
                     $"Port={uri.Port};" +
-                    $"Database={uri.AbsolutePath.Trim('/')};" +
-                    $"Username={userInfo[0]};" +
-                    $"Password={userInfo[1]};" +
-                    $"SslMode=Require;" +
-                    $"Trust Server Certificate=true";
+                    $"Database={uri.AbsolutePath.TrimStart('/')};" +
+                    $"Username={Uri.UnescapeDataString(userInfo[0])};" +
+                    $"Password={Uri.UnescapeDataString(userInfo[1])};" +
+                    "SSL Mode=Require;" +
+                    "Trust Server Certificate=true";
             }
 
+            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
             optionsBuilder.UseNpgsql(connectionString);
 
             return new AppDbContext(optionsBuilder.Options);

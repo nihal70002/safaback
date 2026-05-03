@@ -23,6 +23,7 @@ namespace PrivateECommerce.API.Services
         public IEnumerable<ProductListDto> GetAllProducts()
         {
             return _context.Products
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Variants)
@@ -126,6 +127,7 @@ namespace PrivateECommerce.API.Services
             Console.WriteLine("PRODUCTS → DB HIT");
 
             var query = _context.Products
+    .AsNoTracking()
     .Include(p => p.Brand)   // move include BEFORE filtering
     .Where(p => p.IsActive);
 
@@ -219,6 +221,7 @@ namespace PrivateECommerce.API.Services
             query = query.Trim();
 
             return _context.Products
+                .AsNoTracking()
                 .Include(p => p.Brand)
                 .Include(p => p.Images)
                 .Include(p => p.Variants)
@@ -253,6 +256,7 @@ namespace PrivateECommerce.API.Services
         public ProductDetailDto GetProductById(int productId)
         {
             var product = _context.Products
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Variants)
                 .Include(p => p.Images)
@@ -359,15 +363,11 @@ namespace PrivateECommerce.API.Services
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.Products.Add(product);
-                _context.SaveChanges();
-
                 // 3️⃣ Add Images
                 for (int i = 0; i < dto.ImageUrls.Count; i++)
                 {
-                    _context.ProductImages.Add(new ProductImage
+                    product.Images.Add(new ProductImage
                     {
-                        ProductId = product.Id,
                         ImageUrl = dto.ImageUrls[i],
                         IsPrimary = i == 0
                     });
@@ -376,9 +376,8 @@ namespace PrivateECommerce.API.Services
                 // 4️⃣ Add Variants
                 foreach (var v in dto.Variants)
                 {
-                    _context.ProductVariants.Add(new ProductVariant
+                    product.Variants.Add(new ProductVariant
                     {
-                        ProductId = product.Id,
                         Class = v.Class?.Trim(),
                         Style = v.Style?.Trim(),
                         Material = v.Material?.Trim(),
@@ -390,7 +389,7 @@ namespace PrivateECommerce.API.Services
                     });
                 }
 
-
+                _context.Products.Add(product);
                 _context.SaveChanges();
 
                 // ✅ 1. Commit DB transaction
@@ -603,9 +602,6 @@ namespace PrivateECommerce.API.Services
                         CreatedAt = DateTime.UtcNow
                     };
 
-                    _context.Products.Add(product);
-                    _context.SaveChanges(); // get product.Id
-
                     // ---------- ADD IMAGES ----------
                     if (dto.ImageUrls != null && dto.ImageUrls.Any())
                     {
@@ -613,9 +609,8 @@ namespace PrivateECommerce.API.Services
 
                         foreach (var imageUrl in dto.ImageUrls.Take(5))
                         {
-                            _context.ProductImages.Add(new ProductImage
+                            product.Images.Add(new ProductImage
                             {
-                                ProductId = product.Id,
                                 ImageUrl = imageUrl,
                                 IsPrimary = isPrimary
                             });
@@ -637,9 +632,8 @@ namespace PrivateECommerce.API.Services
                         if (skuExists)
                             throw new ValidationException($"Duplicate SKU detected: {sku}");
 
-                        _context.ProductVariants.Add(new ProductVariant
+                        product.Variants.Add(new ProductVariant
                         {
-                            ProductId = product.Id,
                             Class = v.Class.Trim(),
                             Style = v.Style.Trim(),
                             Material = v.Material.Trim(),
@@ -651,6 +645,8 @@ namespace PrivateECommerce.API.Services
                             LowStockThreshold = 10
                         });
                     }
+
+                    _context.Products.Add(product);
                 }
 
                 _context.SaveChanges();

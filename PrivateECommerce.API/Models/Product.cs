@@ -22,5 +22,6 @@ namespace PrivateECommerce.API.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
+        public ICollection<ProductStock> Stocks { get; set; } = new List<ProductStock>();
     }
 }

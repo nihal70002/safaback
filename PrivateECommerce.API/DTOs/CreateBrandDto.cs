@@ -1,7 +1,11 @@
-﻿namespace PrivateECommerce.API.DTOs
+using System.ComponentModel.DataAnnotations;
+
+namespace PrivateECommerce.API.DTOs
 {
     public class CreateBrandDto
     {
-        public string BrandName { get; set; }
+        [Required]
+        [StringLength(150)]
+        public string BrandName { get; set; } = null!;
     }
 }

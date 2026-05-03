@@ -1,5 +1,5 @@
-﻿using System.Net;
-using System.Text.Json;
+using System.Net;
+using PrivateECommerce.API.DTOs;
 
 public class ExceptionMiddleware
 {
@@ -19,17 +19,28 @@ public class ExceptionMiddleware
         catch (ArgumentException ex)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync(ex.Message);
+            await context.Response.WriteAsJsonAsync(ApiResponse.Fail(ex.Message));
         }
         catch (InvalidOperationException ex)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-            await context.Response.WriteAsync(ex.Message);
+            await context.Response.WriteAsJsonAsync(ApiResponse.Fail(ex.Message));
+        }
+        catch (ValidationException ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            await context.Response.WriteAsJsonAsync(ApiResponse.Fail(ex.Message));
+        }
+        catch (NotFoundException ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            await context.Response.WriteAsJsonAsync(ApiResponse.Fail(ex.Message));
         }
         catch (Exception)
         {
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            await context.Response.WriteAsync("Something went wrong");
+            await context.Response.WriteAsJsonAsync(
+                ApiResponse.Fail("Something went wrong. Please contact admin."));
         }
     }
 }

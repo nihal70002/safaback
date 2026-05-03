@@ -72,5 +72,6 @@ namespace PrivateECommerce.API.Models
         public decimal TotalAmount { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<StockMovement> StockMovements { get; set; } = new List<StockMovement>();
     }
 }

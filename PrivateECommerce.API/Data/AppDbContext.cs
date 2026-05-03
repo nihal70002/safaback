@@ -69,6 +69,9 @@ namespace PrivateECommerce.API.Data
                 .IsUnique();
 
             modelBuilder.Entity<User>()
+                .HasIndex(u => new { u.Role, u.IsActive });
+
+            modelBuilder.Entity<User>()
                 .HasOne(u => u.SalesExecutive)
                 .WithMany(se => se.AssignedCustomers)
                 .HasForeignKey(u => u.SalesExecutiveId)
@@ -111,6 +114,39 @@ namespace PrivateECommerce.API.Data
             modelBuilder.Entity<ProductVariant>()
                 .HasIndex(v => v.ProductCode)
                 .IsUnique();
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => p.IsActive);
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => new { p.CategoryId, p.IsActive });
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => new { p.BrandId, p.IsActive });
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(t => t.Token);
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(t => new { t.Expiry, t.IsUsed });
+
+            modelBuilder.Entity<StockMovement>()
+                .HasIndex(s => s.OrderId);
+
+            modelBuilder.Entity<StockMovement>()
+                .HasIndex(s => s.CreatedAt);
+
+            modelBuilder.Entity<StockMovement>()
+                .HasOne(s => s.Order)
+                .WithMany(o => o.StockMovements)
+                .HasForeignKey(s => s.OrderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ProductStock>()
+                .HasOne(ps => ps.Product)
+                .WithMany(p => p.Stocks)
+                .HasForeignKey(ps => ps.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
 
